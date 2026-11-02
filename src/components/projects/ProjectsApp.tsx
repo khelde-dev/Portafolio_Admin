@@ -11,6 +11,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { useReorder } from "@/hooks/useReorder";
 import { ApiFailure, api } from "@/lib/apiClient";
 import { duplicateValues } from "@/lib/projectForm";
+import { projectUrl } from "@/lib/site";
 import { cn } from "@/lib/utils";
 import {
 	CATEGORIES,
@@ -282,7 +283,7 @@ export const ProjectsApp = ({
 								</Button>
 								{row.status === "published" ? (
 									<a
-										href={`${siteUrl.replace(/\/+$/, "")}/es/project/${encodeURIComponent(row.slug)}`}
+										href={projectUrl(siteUrl, row.slug)}
 										target="_blank"
 										rel="noopener noreferrer"
 										className={cn(

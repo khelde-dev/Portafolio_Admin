@@ -4,6 +4,7 @@ import PageHeader from "@/components/PageHeader.astro";
 import { ProjectForm } from "@/components/projects/ProjectForm";
 import { buttonVariants } from "@/components/ui/button";
 import AdminLayout from "@/layouts/AdminLayout.astro";
+import { projectUrl } from "@/lib/site";
 import { cn } from "@/lib/utils";
 import { resourceId } from "@/schemas/common";
 import type { ProjectRow } from "@/schemas/projects";
@@ -33,7 +34,7 @@ if (!error && !project) Astro.response.status = 404;
 				<PageHeader title={project.title_default} meta={`/${project.slug}`}>
 					{project.status === "published" ? (
 						<a
-							href={`${PUBLIC_PORTFOLIO_URL.replace(/\/+$/, "")}/es/project/${encodeURIComponent(project.slug)}`}
+							href={projectUrl(PUBLIC_PORTFOLIO_URL, project.slug)}
 							target="_blank"
 							rel="noopener noreferrer"
 							class={cn(buttonVariants({ variant: "outline" }), "min-h-11 px-4")}
