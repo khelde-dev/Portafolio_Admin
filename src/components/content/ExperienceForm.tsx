@@ -1,5 +1,6 @@
 import { FormSection } from "@/components/form/FormSection";
 import { TextField } from "@/components/form/fields";
+import { PeriodField } from "@/components/form/PeriodField";
 import { ResourceForm } from "@/components/form/ResourceForm";
 import { TranslationsTabs } from "@/components/form/TranslationsTabs";
 import { ImagePickerField } from "@/components/media/ImagePicker";
@@ -19,7 +20,6 @@ const TRANSLATABLE = [
 		label: "Descripción corta",
 		baseName: "subtitle_default",
 	},
-	{ name: "time", label: "Periodo", baseName: "time_default" },
 	{ name: "location", label: "Ubicación", baseName: "location_default" },
 ] as const;
 
@@ -78,12 +78,7 @@ export const ExperienceForm = ({ initial }: { initial?: ExperienceRow }) => {
 								label="Descripción corta"
 								required
 							/>
-							<TextField
-								name="time_default"
-								label="Periodo"
-								required
-								hint="Por ejemplo: 2023 - Actualidad."
-							/>
+							<PeriodField />
 							<TextField name="location_default" label="Ubicación" required />
 						</>
 					}

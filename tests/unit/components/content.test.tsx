@@ -262,6 +262,74 @@ describe("formularios de contenido", () => {
 		});
 	});
 
+	it("experiencia: el periodo sale de mes y año, con el check de «trabajo aquí»", async () => {
+		const put = vi.spyOn(api, "put").mockResolvedValue(null);
+		render(<ExperienceForm initial={experience({ experience_id: 3 })} />);
+		// "2023 - Actualidad" se lee y marca el check; no hay bloque de fin.
+		const current = screen.getByRole("checkbox", {
+			name: "Actualmente trabajo aquí",
+		});
+		expect(current).toBeChecked();
+		expect(screen.queryByLabelText("Año de fin")).not.toBeInTheDocument();
+
+		await userEvent.click(current);
+		await userEvent.selectOptions(screen.getByLabelText("Año de fin"), "2024");
+		await userEvent.selectOptions(screen.getByLabelText("Mes de fin"), "6");
+		await userEvent.click(
+			screen.getByRole("button", { name: "Guardar cambios" }),
+		);
+		await waitFor(() => expect(put).toHaveBeenCalledOnce());
+		const sent = put.mock.calls[0][1] as {
+			time_default: string;
+			translations: { locale: string; time?: string }[];
+			period?: unknown;
+		};
+		expect(sent.time_default).toBe("2023 - Jun 2024");
+		expect(sent.translations).toContainEqual(
+			expect.objectContaining({ locale: "en", time: "2023 - Jun 2024" }),
+		);
+		expect(sent.translations).toContainEqual(
+			expect.objectContaining({ locale: "fr", time: "2023 - juin 2024" }),
+		);
+		// `period` es solo del formulario: no viaja.
+		expect(sent.period).toBeUndefined();
+	});
+
+	it("experiencia: un fin anterior al inicio se avisa y no se envía", async () => {
+		const put = vi.spyOn(api, "put");
+		render(<ExperienceForm initial={experience({ experience_id: 3 })} />);
+		await userEvent.click(
+			screen.getByRole("checkbox", { name: "Actualmente trabajo aquí" }),
+		);
+		await userEvent.selectOptions(screen.getByLabelText("Año de fin"), "2020");
+		expect(
+			await screen.findByText(
+				"La fecha de fin no puede ser anterior al inicio",
+			),
+		).toBeInTheDocument();
+		await userEvent.click(
+			screen.getByRole("button", { name: "Guardar cambios" }),
+		);
+		expect(put).not.toHaveBeenCalled();
+	});
+
+	it("experiencia: un periodo guardado como texto libre se conserva", async () => {
+		const put = vi.spyOn(api, "put").mockResolvedValue(null);
+		render(
+			<ExperienceForm
+				initial={experience({ experience_id: 3, time_default: "hace años" })}
+			/>,
+		);
+		expect(
+			screen.getByText(/Periodo guardado: «hace años»/),
+		).toBeInTheDocument();
+		await userEvent.click(
+			screen.getByRole("button", { name: "Guardar cambios" }),
+		);
+		await waitFor(() => expect(put).toHaveBeenCalledOnce());
+		expect(put.mock.calls[0][1]).toMatchObject({ time_default: "hace años" });
+	});
+
 	it("experiencia: sin logo ni texto alternativo no se envia", async () => {
 		const post = vi.spyOn(api, "post");
 		render(<ExperienceForm />);

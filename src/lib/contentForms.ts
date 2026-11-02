@@ -1,3 +1,4 @@
+import { emptyPeriod, type PeriodValue, parsePeriod } from "@/lib/period";
 import { normalizeTranslations, type TranslationMap } from "@/lib/translations";
 import {
 	ABOUT_TEXT_FIELDS,
@@ -23,6 +24,8 @@ export interface ExperienceValues {
 	img: string;
 	alt: string;
 	time_default: string;
+	/** Solo del formulario (mes y año); lo que viaja es `time_default`. */
+	period: PeriodValue;
 	location_default: string;
 	translations: TranslationMap;
 }
@@ -35,6 +38,7 @@ export const emptyExperience = (): ExperienceValues => ({
 	img: "",
 	alt: "",
 	time_default: "",
+	period: emptyPeriod(),
 	location_default: "",
 	translations: {},
 });
@@ -47,6 +51,7 @@ export const experienceValues = (row: ExperienceRow): ExperienceValues => ({
 	img: row.img,
 	alt: row.alt,
 	time_default: row.time_default,
+	period: parsePeriod(row.time_default) ?? emptyPeriod(),
 	location_default: row.location_default,
 	translations: normalizeTranslations(
 		row.translations,

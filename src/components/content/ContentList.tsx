@@ -2,12 +2,12 @@ import { Pencil, Plus, Trash2 } from "lucide-react";
 import { useCallback, useState } from "react";
 import { ConfirmDelete } from "@/components/ConfirmDelete";
 import { IndexList } from "@/components/IndexList";
+import { MediaImage } from "@/components/media/MediaImage";
 import { MoveButtons, OrderBar } from "@/components/OrderControls";
 import { EmptyState, ErrorState } from "@/components/states";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { useReorder } from "@/hooks/useReorder";
 import { ApiFailure, api } from "@/lib/apiClient";
-import { mediaUrl } from "@/lib/media";
 import { cn } from "@/lib/utils";
 
 interface Props<T> {
@@ -149,9 +149,8 @@ export function ContentList<T>({
 							)}
 						>
 							{image ? (
-								<img
-									src={mediaUrl(image)}
-									alt=""
+								<MediaImage
+									mediaKey={image}
 									loading="lazy"
 									className="size-14 rounded-lg border border-border bg-muted object-contain"
 								/>

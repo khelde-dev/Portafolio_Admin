@@ -3,13 +3,13 @@ import { useCallback, useId, useMemo, useState } from "react";
 import { ConfirmDelete } from "@/components/ConfirmDelete";
 import { IndexList } from "@/components/IndexList";
 import { LocalTime } from "@/components/LocalTime";
+import { MediaImage } from "@/components/media/MediaImage";
 import { MoveButtons, OrderBar } from "@/components/OrderControls";
 import { StatusBadge } from "@/components/StatusBadge";
 import { EmptyState, ErrorState } from "@/components/states";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { useReorder } from "@/hooks/useReorder";
 import { ApiFailure, api } from "@/lib/apiClient";
-import { mediaUrl } from "@/lib/media";
 import { duplicateValues } from "@/lib/projectForm";
 import { cn } from "@/lib/utils";
 import {
@@ -224,9 +224,8 @@ export const ProjectsApp = ({
 					const index = rows.findIndex((r) => r.project_id === row.project_id);
 					return (
 						<div className="grid items-center gap-x-4 gap-y-3 px-1 py-4 md:grid-cols-[4.5rem_minmax(0,1fr)_auto]">
-							<img
-								src={mediaUrl(row.card_image)}
-								alt=""
+							<MediaImage
+								mediaKey={row.card_image}
 								loading="lazy"
 								className="size-[4.5rem] rounded-lg border border-border bg-muted object-cover"
 							/>
