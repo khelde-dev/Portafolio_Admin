@@ -82,6 +82,15 @@ export const isValidTechName = (name: string): boolean => TECH_NAME.test(name);
 export const techIconUrl = (name: string): string =>
 	`${PUBLIC_ICONS_URL}?i=${encodeURIComponent(name)}`;
 
+/**
+ * Varias tecnologias en UNA sola imagen: `<PUBLIC_ICONS_URL>?i=git,docker,c++`.
+ * El servicio acepta los nombres separados por coma, asi que una peticion dibuja
+ * todo el conjunto. Cada nombre se codifica por separado (un `+` sin codificar
+ * se leeria como un espacio) y las comas quedan literales.
+ */
+export const techStackUrl = (names: readonly string[]): string =>
+	`${PUBLIC_ICONS_URL}?i=${names.map(encodeURIComponent).join(",")}`;
+
 /** Sugerencias para el buscador: las que contienen el texto, sin las ya elegidas. */
 export const suggestTechnologies = (
 	query: string,
