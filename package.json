@@ -15,6 +15,7 @@
 		"preview": "astro preview",
 		"astro": "astro",
 		"prepare": "husky",
+		"dev:access": "node scripts/dev-access.mjs",
 		"format": "pnpm exec biome format --write ./src",
 		"lint": "pnpm exec biome lint --write ./src",
 		"check:biome": "pnpm exec biome check --write ./src",

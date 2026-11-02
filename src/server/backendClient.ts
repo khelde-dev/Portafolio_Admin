@@ -1,4 +1,5 @@
 import { API_SECRET_TOKEN, BACKEND_URL } from "astro:env/server";
+import { devJwt } from "@/server/devAccess";
 
 /**
  * Unico cliente del Backend_Portafolio. Solo corre en el servidor (Worker):
@@ -122,7 +123,10 @@ export const callBackend = async <T = unknown>(
 		Authorization: `Bearer ${API_SECRET_TOKEN}`,
 		Accept: "application/json",
 	};
-	if (accessJwt) headers["Cf-Access-Jwt-Assertion"] = accessJwt;
+	// En `pnpm dev` no hay Access: se firma un JWT de prueba (src/server/devAccess).
+	// `import.meta.env.DEV` es `false` en el build, asi que esto no existe en produccion.
+	const jwt = accessJwt ?? (import.meta.env.DEV ? await devJwt() : null);
+	if (jwt) headers["Cf-Access-Jwt-Assertion"] = jwt;
 	// El CSRF de Hono trata una escritura SIN Content-Type como text/plain y la
 	// bloquea: toda escritura lo lleva, incluso un DELETE sin cuerpo.
 	if (method !== "GET")
