@@ -9,6 +9,7 @@ import {
 	BackendError,
 	callBackend,
 	type FieldIssue,
+	rejectionMessage,
 } from "@/server/backendClient";
 import { findResource, type ResourceConfig } from "@/server/resources";
 
@@ -79,10 +80,7 @@ export const mapBackendError = (
 		case 503:
 			// El backend rechazo al admin (token, Access sin configurar): es un
 			// problema de configuracion, no del usuario.
-			return fail(
-				502,
-				"El backend rechazó la petición. Revisa la pantalla Estado.",
-			);
+			return fail(502, rejectionMessage(error.reason));
 		default:
 			return fail(502, "El backend respondió con un error. Intenta de nuevo.");
 	}

@@ -1,4 +1,8 @@
-import { BackendError, callBackend } from "@/server/backendClient";
+import {
+	BackendError,
+	callBackend,
+	rejectionMessage,
+} from "@/server/backendClient";
 
 /**
  * Lecturas del backend para las PAGINAS (SSR): traen los datos iniciales de una
@@ -19,7 +23,7 @@ const jwtOf = (request: Request) =>
 export const describeFailure = (error: unknown): string =>
 	error instanceof BackendError &&
 	(error.status === 401 || error.status === 403 || error.status === 503)
-		? "El backend rechazó la petición. Revisa la pantalla Estado."
+		? rejectionMessage(error.reason)
 		: "No se pudo leer el backend. Intenta de nuevo.";
 
 /** `GET <path>` -> `data` del backend, o un mensaje de error. */

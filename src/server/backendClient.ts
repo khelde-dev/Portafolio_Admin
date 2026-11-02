@@ -26,11 +26,55 @@ export interface UsageRef {
 	field: string;
 }
 
+/**
+ * Por que el backend rechazo al admin. Sale de los mensajes FIJOS del backend
+ * (nunca se copia texto libre): distingue un token distinto (`bearer`) de un
+ * problema con el JWT de Access, que se arreglan en sitios distintos.
+ */
+export type FailReason =
+	| "bearer"
+	| "access-missing"
+	| "access-invalid"
+	| "access-unconfigured";
+
+const REASONS: Record<string, FailReason> = {
+	"Invalid token": "bearer",
+	"No Authorization header": "bearer",
+	"Invalid Authorization header": "bearer",
+	"Falta la sesion de Cloudflare Access": "access-missing",
+	"Sesion de Access invalida": "access-invalid",
+	"Cloudflare Access no esta configurado": "access-unconfigured",
+};
+
+export const classifyReason = (payload: unknown): FailReason | null => {
+	const message = (payload as { message?: unknown })?.message;
+	return typeof message === "string" && Object.hasOwn(REASONS, message)
+		? REASONS[message]
+		: null;
+};
+
+/** Que pasa y donde se arregla, segun el motivo que dio el backend. */
+export const rejectionMessage = (reason: FailReason | null): string => {
+	switch (reason) {
+		case "bearer":
+			return "El backend no aceptó el token. API_SECRET_TOKEN del admin debe valer lo mismo que API_TOKEN del backend.";
+		case "access-unconfigured":
+			return "El backend no tiene Cloudflare Access configurado (ACCESS_AUD y ACCESS_TEAM_DOMAIN). En local: pnpm dev:access y reinicia el backend.";
+		case "access-missing":
+			return "El admin no mandó el JWT de Access. En local: pnpm dev:access, pega DEV_ACCESS_KEY en el .env del admin y reinicia.";
+		case "access-invalid":
+			return "El backend no aceptó el JWT de Access (audiencia, emisor o llave distintos). En local: usa las líneas que imprimió pnpm dev:access en el backend.";
+		default:
+			return "El backend rechazó la petición. Revisa la pantalla Estado.";
+	}
+};
+
 export class BackendError extends Error {
 	constructor(
 		readonly status: number,
 		readonly issues: FieldIssue[] = [],
 		readonly usedBy: UsageRef[] = [],
+		readonly reason: FailReason | null = null,
 	) {
 		super(`El backend respondio ${status}`);
 		this.name = "BackendError";
@@ -148,13 +192,14 @@ export const callBackend = async <T = unknown>(
 	});
 
 	if (!response.ok) {
-		const body = [400, 409].includes(response.status)
+		const body = [400, 401, 403, 409, 503].includes(response.status)
 			? await response.json().catch(() => null)
 			: null;
 		throw new BackendError(
 			response.status,
 			response.status === 400 ? sanitizeIssues(body) : [],
 			response.status === 409 ? sanitizeUsage(body) : [],
+			[401, 403, 503].includes(response.status) ? classifyReason(body) : null,
 		);
 	}
 	// Sin cuerpo (204) es valido.
