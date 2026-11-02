@@ -23,7 +23,7 @@ mismo camino. Cuando algo cambie de verdad, se cambia aquí en el mismo PR.
 ## Flujo de una petición
 
 ```
-Navegador ──► Cloudflare Access ──► Worker "admin-portafolio" ──► Worker "backend-portafolio" ──► D1 / R2
+Navegador ──► Cloudflare Access ──► Worker "portafolio-admin" ──► Worker "backend-portafolio" ──► D1 / R2
  (tú)         login (correo +        1. middleware: cabeceras      verifica OTRA VEZ el JWT
               PIN / SSO). Pone       2. verifica el JWT de Access  de Access y el bearer
               el JWT en la           3. página SSR o ruta /api/*
