@@ -1,0 +1,22 @@
+---
+import { CommentsApp } from "@/components/CommentsApp";
+import PageHeader from "@/components/PageHeader.astro";
+import AdminLayout from "@/layouts/AdminLayout.astro";
+import type { CommentRow } from "@/schemas/inbox";
+import { loadList } from "@/server/data";
+
+const { data, error } = await loadList<CommentRow[]>(
+	Astro.request,
+	"/comments/admin",
+);
+const pending = data?.filter((c) => c.status === "pending").length ?? 0;
+---
+
+<AdminLayout title="Comentarios" activeId="comentarios" crumbs={[{ label: "Comentarios" }]}>
+	<PageHeader
+		title="Comentarios"
+		description="Los comentarios nuevos no se ven en el sitio hasta que los publiques."
+		meta={data ? `${pending} por moderar de ${data.length}` : undefined}
+	/>
+	<CommentsApp client:load initial={data} initialError={error} />
+</AdminLayout>

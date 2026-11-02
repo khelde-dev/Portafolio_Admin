@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/breadcrumb";
 import Layout from "@/layouts/Layout.astro";
 import { findNavItem } from "@/lib/nav";
+import { loadBadges } from "@/server/data";
 
 interface Crumb {
 	label: string;
@@ -30,7 +31,9 @@ interface Props {
 	badges?: Record<string, number>;
 }
 
-const { title, activeId, crumbs = [], badges = {} } = Astro.props;
+const { title, activeId, crumbs = [] } = Astro.props;
+// Globos del menu: si la pagina no los trae, se piden aqui (un fallo es 0).
+const badges = Astro.props.badges ?? (await loadBadges(Astro.request));
 const module = findNavItem(activeId);
 const trail: Crumb[] = [
 	...(module && activeId !== "panel"
