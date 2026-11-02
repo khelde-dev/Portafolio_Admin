@@ -1,0 +1,12 @@
+#!/bin/sh
+
+# Solo lo rápido: Biome sobre los archivos en staging. Type-check, build y
+# tests corren en GitHub Actions (.github/workflows).
+staged=$(git diff --cached --name-only --diff-filter=ACMR)
+[ -z "$staged" ] && exit 0
+
+echo "📦 Biome sobre los archivos en staging..."
+pnpm exec biome check --write --staged --no-errors-on-unmatched || exit 1
+
+# Re-agrega solo lo que ya estaba en staging (no hace `git add .`).
+echo "$staged" | while IFS= read -r f; do [ -f "$f" ] && git add -- "$f"; done

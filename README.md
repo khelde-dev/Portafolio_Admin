@@ -1,46 +1,88 @@
-# Astro Starter Kit: Basics
+# Portafolio Admin
 
-```sh
-npm create astro@latest -- --template basics
+Panel de administración (CMS) del [portafolio de Erick González](https://github.com/muke78/Portafolio).
+Edita el contenido que sirve [`Backend_Portafolio`](https://github.com/muke78/Backend_Portafolio)
+(Worker de Hono + D1 + R2).
+
+**Sin pantalla de login:** la identidad la resuelve **Cloudflare Access** delante
+del Worker; el admin verifica el JWT que Access le manda. El token del backend
+vive solo en el servidor y el navegador nunca habla con el backend.
+
+> Estado: esqueleto. Tooling, tokens de diseño, cabeceras de seguridad y cliente
+> del backend listos; las pantallas se construyen siguiendo
+> [`docs/ARQUITECTURA.md`](./docs/ARQUITECTURA.md).
+
+## Stack
+
+- [Astro 7](https://astro.build) SSR + islas de React 18 en **Cloudflare Workers**
+- Tailwind CSS v4 + shadcn/ui sobre Base UI (misma paleta que el portafolio)
+- Zod + react-hook-form · Biome · Vitest (cobertura v8) · Playwright + axe
+- Husky (commit-msg + Biome en staging) · GitHub Actions (CI, CodeQL, gitleaks)
+
+## Empezar
+
+Requisitos: Node ≥ 22.12 y **pnpm** (la versión exacta sale de `packageManager`).
+
+```bash
+pnpm install
+cp .env.example .env     # completa API_SECRET_TOKEN; el resto tiene valores por defecto
+pnpm dev                 # http://localhost:4322
 ```
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+En desarrollo no hay Cloudflare Access: el admin usa un usuario falso que solo
+existe bajo `import.meta.env.DEV`.
 
-## 🚀 Project Structure
+## Comandos
 
-Inside of your Astro project, you'll see the following folders and files:
+| Comando | Qué hace |
+|---|---|
+| `pnpm dev` | servidor de desarrollo (puerto 4322) |
+| `pnpm build` | build de producción |
+| `pnpm check` | tipos (`astro check`), debe quedar en 0 errores |
+| `pnpm check:biome` | Biome: formato + lint con `--write` |
+| `pnpm lint:ci` | Biome en modo CI (sin escribir) |
+| `pnpm test:unit` | Vitest |
+| `pnpm test:unit:coverage` | Vitest con cobertura y pisos mínimos |
+| `pnpm test:e2e` | Playwright (levanta el servidor si hace falta) |
 
-```text
-/
-├── public/
-│   └── favicon.svg
-├── src
-│   ├── assets
-│   │   └── astro.svg
-│   ├── components
-│   │   └── Welcome.astro
-│   ├── layouts
-│   │   └── Layout.astro
-│   └── pages
-│       └── index.astro
-└── package.json
-```
+## Variables
 
-To learn more about the folder structure of an Astro project, refer to [our guide on project structure](https://docs.astro.build/en/basics/project-structure/).
+Todas las URLs son variables; se declaran una sola vez en `astro.config.mjs` y
+se documentan en [`.env.example`](./.env.example).
 
-## 🧞 Commands
+| Variable | Contexto | Secreta | Para qué |
+|---|---|---|---|
+| `BACKEND_URL` | servidor | no | base de la API de contenido |
+| `API_SECRET_TOKEN` | servidor | **sí** | bearer hacia el backend |
+| `ACCESS_TEAM_DOMAIN`, `ACCESS_AUD` | servidor | no | verificar el JWT de Access |
+| `PUBLIC_MEDIA_URL` | cliente (build) | no | origen público de R2 |
+| `PUBLIC_PORTFOLIO_URL` | cliente (build) | no | enlaces al portafolio público |
 
-All commands are run from the root of the project, from a terminal:
+## Despliegue
 
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:4321`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help` | Get help using the Astro CLI                     |
+Cloudflare Workers Builds, rama de producción `main`:
 
-## 👀 Want to learn more?
+- Build: `pnpm build` · Deploy: `npx wrangler deploy`
+- Secreto: `npx wrangler secret put API_SECRET_TOKEN` (o en el panel)
+- Variables de **build** (`PUBLIC_*`): panel del Worker → Settings → Build →
+  Variables
 
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+**No despliegues con datos reales sin Cloudflare Access activo** sobre el Worker.
+Pasos y orden en [`docs/ARQUITECTURA.md`](./docs/ARQUITECTURA.md#identidad-y-cloudflare-access).
+
+## Flujo de trabajo
+
+Ramas desde `dev` (`feat/…`, `fix/…`, `chore/…`), Pull Request a `dev`, `main`
+solo para releases. Commits en
+[Conventional Commits](./docs/DocsCommiter.md). Las reglas completas, de
+seguridad y de diseño, están en [`AGENTS.md`](./AGENTS.md).
+
+## Documentación
+
+- [`docs/ARQUITECTURA.md`](./docs/ARQUITECTURA.md): estructura, flujo y hoja de ruta
+- [`docs/UI_STANDARDS.md`](./docs/UI_STANDARDS.md): sistema de diseño
+- [`docs/DocsCommiter.md`](./docs/DocsCommiter.md): prefijos de commit
+
+## Licencia
+
+[MIT](./LICENSE)
