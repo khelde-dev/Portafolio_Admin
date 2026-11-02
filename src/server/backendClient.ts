@@ -33,7 +33,13 @@ export const buildBackendUrl = (path: string, base = BACKEND_URL): string => {
 	if (!path.startsWith("/") || path.startsWith("//")) {
 		throw new Error("La ruta del backend debe empezar con una sola /");
 	}
-	if (path.split("/").some((segment) => segment === "..")) {
+	// Solo la ruta: un `..` dentro de un valor de la consulta no es un segmento.
+	if (
+		path
+			.split("?")[0]
+			.split("/")
+			.some((segment) => segment === "..")
+	) {
 		throw new Error("La ruta del backend no puede contener ..");
 	}
 	return `${base.replace(/\/+$/, "")}${path}`;
