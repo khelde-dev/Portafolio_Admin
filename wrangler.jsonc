@@ -21,9 +21,11 @@
 	// variables de build del panel de Cloudflare, no aqui.
 	"vars": {
 		"BACKEND_URL": "https://backend-portafolio.erickm-gonzalez-rivera.workers.dev/api",
-		// De la aplicacion de Cloudflare Access que protege este Worker.
-		"ACCESS_TEAM_DOMAIN": "",
-		"ACCESS_AUD": ""
+		// De la aplicacion de Cloudflare Access que protege este Worker. No son
+		// secretos (el AUD y el dominio del equipo aparecen en cada JWT). El
+		// dominio lleva https:// y el MISMO valor va en el backend.
+		"ACCESS_TEAM_DOMAIN": "https://throbbing-lake-8623.cloudflareaccess.com",
+		"ACCESS_AUD": "a285709a3ab3c0bdfcfa01e6366d6a621602007ef0a8a51865745f2cd327b340"
 	}
 
 	// SECRETO (no va en este archivo): API_SECRET_TOKEN
