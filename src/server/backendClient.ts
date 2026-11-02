@@ -59,11 +59,11 @@ export const rejectionMessage = (reason: FailReason | null): string => {
 		case "bearer":
 			return "El backend no aceptó el token. API_SECRET_TOKEN del admin debe valer lo mismo que API_TOKEN del backend.";
 		case "access-unconfigured":
-			return "El backend no tiene Cloudflare Access configurado (ACCESS_AUD y ACCESS_TEAM_DOMAIN). En local: pnpm dev:access y reinicia el backend.";
+			return "El backend no tiene Cloudflare Access configurado (ACCESS_AUD y ACCESS_TEAM_DOMAIN). En local: corre pnpm dev:access en la carpeta del admin (Portafolio_admin), pega las líneas ACCESS_* que imprime en el .env del backend y reinicia el backend.";
 		case "access-missing":
-			return "El admin no mandó el JWT de Access. En local: pnpm dev:access, pega DEV_ACCESS_KEY en el .env del admin y reinicia.";
+			return "El admin no mandó el JWT de Access. En local: corre pnpm dev:access en la carpeta del admin (Portafolio_admin), pega DEV_ACCESS_KEY en el .env del admin y reinicia el admin.";
 		case "access-invalid":
-			return "El backend no aceptó el JWT de Access (audiencia, emisor o llave distintos). En local: usa las líneas que imprimió pnpm dev:access en el backend.";
+			return "El backend no aceptó el JWT de Access (audiencia, emisor o llave distintos). En local: pega en el .env del backend las líneas ACCESS_* que imprime pnpm dev:access (se corre en Portafolio_admin) y reinicia ambos.";
 		default:
 			return "El backend rechazó la petición. Revisa la pantalla Estado.";
 	}

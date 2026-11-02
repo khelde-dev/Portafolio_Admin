@@ -37,7 +37,8 @@ existe bajo `import.meta.env.DEV`.
 `pnpm dev` no tiene Cloudflare Access, pero las rutas del CMS del backend sí
 exigen su JWT: sin él responden **503** ("Access no está configurado") y las
 pantallas dicen "El backend rechazó la petición". Para trabajar contra
-`wrangler dev` (por ejemplo `BACKEND_URL=http://127.0.0.1:8787`):
+`wrangler dev` (por ejemplo `BACKEND_URL=http://127.0.0.1:8787`), corre esto
+**en este repo** (el backend no tiene ese script):
 
 ```bash
 pnpm dev:access
