@@ -1,0 +1,59 @@
+---
+import { PUBLIC_PORTFOLIO_URL } from "astro:env/client";
+import PageHeader from "@/components/PageHeader.astro";
+import { ProjectForm } from "@/components/projects/ProjectForm";
+import { buttonVariants } from "@/components/ui/button";
+import AdminLayout from "@/layouts/AdminLayout.astro";
+import { cn } from "@/lib/utils";
+import { resourceId } from "@/schemas/common";
+import type { ProjectRow } from "@/schemas/projects";
+import { loadList } from "@/server/data";
+
+// El backend no tiene "un proyecto por id" para el CMS: se lee la lista y se busca.
+const id = resourceId.safeParse(Astro.params.id);
+const { data, error } = await loadList<ProjectRow[]>(
+	Astro.request,
+	"/projects/admin",
+);
+const project = id.success
+	? data?.find((p) => p.project_id === id.data)
+	: undefined;
+
+if (!error && !project) Astro.response.status = 404;
+---
+
+<AdminLayout
+	title={project ? project.title_default : "Proyecto"}
+	activeId="proyectos"
+	crumbs={[{ label: project?.title_default ?? "No encontrado" }]}
+>
+	{
+		project ? (
+			<>
+				<PageHeader title={project.title_default} meta={`/${project.slug}`}>
+					{project.status === "published" ? (
+						<a
+							href={`${PUBLIC_PORTFOLIO_URL.replace(/\/+$/, "")}/es/project/${encodeURIComponent(project.slug)}`}
+							target="_blank"
+							rel="noopener noreferrer"
+							class={cn(buttonVariants({ variant: "outline" }), "min-h-11 px-4")}
+						>
+							Ver en el sitio
+						</a>
+					) : null}
+				</PageHeader>
+				<ProjectForm client:load initial={project} />
+			</>
+		) : (
+			<>
+				<PageHeader title={error ? "No se pudo cargar" : "Proyecto no encontrado"} />
+				<p class="max-w-[62ch] text-muted-foreground">
+					{error ?? "Ese proyecto ya no existe o la dirección no es correcta."}
+				</p>
+				<a href="/proyectos" class={cn(buttonVariants({ variant: "outline" }), "mt-6 min-h-11 px-4")}>
+					Volver a proyectos
+				</a>
+			</>
+		)
+	}
+</AdminLayout>

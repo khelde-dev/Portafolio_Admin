@@ -93,6 +93,7 @@ describe("el token del backend es solo de servidor", () => {
 			...config.matchAll(/(\w+):\s*envField\.\w+\(\{\s*context:\s*"client"/g),
 		].map((m) => m[1]);
 		expect(clientVars.sort()).toEqual([
+			"PUBLIC_ICONS_URL",
 			"PUBLIC_MEDIA_URL",
 			"PUBLIC_PORTFOLIO_URL",
 		]);

@@ -52,6 +52,7 @@ Todo el stack vive en **Cloudflare** (V8 isolates, sin contenedores):
   | `API_SECRET_TOKEN` | servidor, **secreta** | bearer hacia el backend (`wrangler secret put`) |
   | `ACCESS_TEAM_DOMAIN`, `ACCESS_AUD` | servidor, pública | verificar el JWT de Access |
   | `PUBLIC_MEDIA_URL` | cliente (build) | origen público de R2; solo vía `src/lib/media.ts` |
+  | `PUBLIC_ICONS_URL` | cliente (build) | servicio de iconos de tecnologías (el mismo del portafolio) |
   | `PUBLIC_PORTFOLIO_URL` | cliente (build) | enlaces al portafolio público |
 
   No escribas esas URLs en componentes ni en el código: al comprar el dominio
