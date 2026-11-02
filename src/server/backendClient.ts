@@ -9,10 +9,19 @@ import { API_SECRET_TOKEN, BACKEND_URL } from "astro:env/server";
  *   vuelve a verificar: dos puertas, no una).
  * - La URL base sale de BACKEND_URL; nada de URLs escritas en el codigo.
  * - Los errores NO llevan cuerpo ni cabeceras del backend (podrian traer
- *   datos o el token): solo el estado HTTP.
+ *   datos o el token): solo el estado HTTP y, en un 400 de validacion, los
+ *   avisos por campo ya depurados (`issues`).
  */
+export interface FieldIssue {
+	path: (string | number)[];
+	message: string;
+}
+
 export class BackendError extends Error {
-	constructor(readonly status: number) {
+	constructor(
+		readonly status: number,
+		readonly issues: FieldIssue[] = [],
+	) {
 		super(`El backend respondio ${status}`);
 		this.name = "BackendError";
 	}
@@ -20,7 +29,10 @@ export class BackendError extends Error {
 
 export interface BackendRequest {
 	method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
+	/** Objeto JSON, o bytes si se indica `contentType`. */
 	body?: unknown;
+	/** Tipo del cuerpo cuando NO es JSON (p. ej. `image/webp`). */
+	contentType?: string;
 	/** JWT de Cloudflare Access de la peticion en curso. */
 	accessJwt?: string | null;
 	timeoutMs?: number;
@@ -45,11 +57,27 @@ export const buildBackendUrl = (path: string, base = BACKEND_URL): string => {
 	return `${base.replace(/\/+$/, "")}${path}`;
 };
 
+/** Avisos por campo de un 400 de Zod, reducidos a ruta + mensaje (sin otros datos). */
+export const sanitizeIssues = (payload: unknown): FieldIssue[] => {
+	const raw = (payload as { errors?: unknown })?.errors;
+	if (!Array.isArray(raw)) return [];
+	return raw.slice(0, 50).flatMap((item) => {
+		const { path, message } = (item ?? {}) as Record<string, unknown>;
+		if (!Array.isArray(path) || typeof message !== "string") return [];
+		const clean = path.filter(
+			(p): p is string | number =>
+				typeof p === "string" || typeof p === "number",
+		);
+		return [{ path: clean, message: message.slice(0, 200) }];
+	});
+};
+
 export const callBackend = async <T = unknown>(
 	path: string,
 	{
 		method = "GET",
 		body,
+		contentType,
 		accessJwt,
 		timeoutMs = TIMEOUT_MS,
 	}: BackendRequest = {},
@@ -59,14 +87,34 @@ export const callBackend = async <T = unknown>(
 		Accept: "application/json",
 	};
 	if (accessJwt) headers["Cf-Access-Jwt-Assertion"] = accessJwt;
-	if (body !== undefined) headers["Content-Type"] = "application/json";
+	// El CSRF de Hono trata una escritura SIN Content-Type como text/plain y la
+	// bloquea: toda escritura lo lleva, incluso un DELETE sin cuerpo.
+	if (method !== "GET")
+		headers["Content-Type"] = contentType ?? "application/json";
 
+	const isJson = contentType === undefined;
 	const response = await fetch(buildBackendUrl(path), {
 		method,
 		headers,
-		body: body === undefined ? undefined : JSON.stringify(body),
+		body:
+			body === undefined
+				? undefined
+				: isJson
+					? JSON.stringify(body)
+					: (body as BodyInit),
+		// Sin opcion `cache`: Workers no cachea fetch por defecto y rechaza esa
+		// opcion si la bandera de compatibilidad no esta activa.
 		signal: AbortSignal.timeout(timeoutMs),
 	});
-	if (!response.ok) throw new BackendError(response.status);
-	return (await response.json()) as T;
+
+	if (!response.ok) {
+		const issues =
+			response.status === 400
+				? sanitizeIssues(await response.json().catch(() => null))
+				: [];
+		throw new BackendError(response.status, issues);
+	}
+	// Sin cuerpo (204) es valido.
+	const text = await response.text();
+	return (text ? JSON.parse(text) : undefined) as T;
 };

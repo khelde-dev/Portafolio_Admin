@@ -12,7 +12,9 @@ const { BackendError, buildBackendUrl, callBackend } = await import(
 afterEach(() => vi.unstubAllGlobals());
 
 const stubFetch = (response: Response) => {
-	const fetchMock = vi.fn().mockResolvedValue(response);
+	const fetchMock = vi
+		.fn()
+		.mockImplementation(() => Promise.resolve(response.clone()));
 	vi.stubGlobal("fetch", fetchMock);
 	return fetchMock;
 };
@@ -67,6 +69,79 @@ describe("callBackend", () => {
 	it("devuelve el JSON de la respuesta", async () => {
 		stubFetch(Response.json({ data: [1, 2] }));
 		expect(await callBackend("/projects")).toEqual({ data: [1, 2] });
+	});
+
+	it("toda escritura lleva Content-Type, incluso un DELETE sin cuerpo", async () => {
+		const fetchMock = stubFetch(Response.json({ success: true }));
+		await callBackend("/projects/3", { method: "DELETE" });
+		expect(fetchMock.mock.calls[0][1].headers["Content-Type"]).toBe(
+			"application/json",
+		);
+		await callBackend("/projects/3", { method: "PUT", body: { a: 1 } });
+		expect(fetchMock.mock.calls[1][1].headers["Content-Type"]).toBe(
+			"application/json",
+		);
+	});
+
+	it("un GET no manda Content-Type", async () => {
+		const fetchMock = stubFetch(Response.json({}));
+		await callBackend("/projects");
+		expect(fetchMock.mock.calls[0][1].headers).not.toHaveProperty(
+			"Content-Type",
+		);
+	});
+
+	it("manda bytes tal cual cuando se indica el tipo (subida de imagen)", async () => {
+		const fetchMock = stubFetch(Response.json({ key: "a.webp" }));
+		const bytes = new Uint8Array([1, 2, 3]);
+		await callBackend("/media", {
+			method: "POST",
+			body: bytes,
+			contentType: "image/webp",
+		});
+		const init = fetchMock.mock.calls[0][1];
+		expect(init.headers["Content-Type"]).toBe("image/webp");
+		expect(init.body).toBe(bytes);
+	});
+
+	it("una respuesta sin cuerpo (204) no es un fallo", async () => {
+		stubFetch(new Response(null, { status: 204 }));
+		expect(
+			await callBackend("/projects/3", { method: "DELETE" }),
+		).toBeUndefined();
+	});
+
+	it("un 400 conserva solo ruta y mensaje de cada aviso, nada mas", async () => {
+		stubFetch(
+			Response.json(
+				{
+					success: false,
+					message: "Datos invalidos",
+					errors: [
+						{
+							path: ["slug"],
+							message: "Slug invalido",
+							code: "x",
+							secreto: "no",
+						},
+						{ path: ["translations", 1, "title"], message: "Requerido" },
+						{ message: "sin ruta" },
+					],
+					stack: "interno",
+				},
+				{ status: 400 },
+			),
+		);
+		const error = (await callBackend("/projects", {
+			method: "POST",
+			body: {},
+		}).catch((e) => e)) as InstanceType<typeof BackendError>;
+		expect(error.status).toBe(400);
+		expect(error.issues).toEqual([
+			{ path: ["slug"], message: "Slug invalido" },
+			{ path: ["translations", 1, "title"], message: "Requerido" },
+		]);
+		expect(JSON.stringify(error)).not.toContain("interno");
 	});
 
 	it("un error trae solo el estado, nunca el cuerpo del backend", async () => {
