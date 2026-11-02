@@ -17,10 +17,19 @@ export interface FieldIssue {
 	message: string;
 }
 
+/** Donde se usa una imagen (la respuesta 409 de DELETE /media/<clave>). */
+export interface UsageRef {
+	resource: string;
+	id: number;
+	label: string;
+	field: string;
+}
+
 export class BackendError extends Error {
 	constructor(
 		readonly status: number,
 		readonly issues: FieldIssue[] = [],
+		readonly usedBy: UsageRef[] = [],
 	) {
 		super(`El backend respondio ${status}`);
 		this.name = "BackendError";
@@ -72,6 +81,33 @@ export const sanitizeIssues = (payload: unknown): FieldIssue[] => {
 	});
 };
 
+/** Usos de una imagen de un 409, reducidos a campos conocidos y de tipo seguro. */
+export const sanitizeUsage = (payload: unknown): UsageRef[] => {
+	const raw = (payload as { data?: { usedBy?: unknown } })?.data?.usedBy;
+	if (!Array.isArray(raw)) return [];
+	return raw.slice(0, 100).flatMap((item) => {
+		const { resource, id, label, field } = (item ?? {}) as Record<
+			string,
+			unknown
+		>;
+		if (
+			typeof resource !== "string" ||
+			typeof id !== "number" ||
+			typeof label !== "string" ||
+			typeof field !== "string"
+		)
+			return [];
+		return [
+			{
+				resource: resource.slice(0, 40),
+				id,
+				label: label.slice(0, 200),
+				field: field.slice(0, 40),
+			},
+		];
+	});
+};
+
 export const callBackend = async <T = unknown>(
 	path: string,
 	{
@@ -108,11 +144,14 @@ export const callBackend = async <T = unknown>(
 	});
 
 	if (!response.ok) {
-		const issues =
-			response.status === 400
-				? sanitizeIssues(await response.json().catch(() => null))
-				: [];
-		throw new BackendError(response.status, issues);
+		const body = [400, 409].includes(response.status)
+			? await response.json().catch(() => null)
+			: null;
+		throw new BackendError(
+			response.status,
+			response.status === 400 ? sanitizeIssues(body) : [],
+			response.status === 409 ? sanitizeUsage(body) : [],
+		);
 	}
 	// Sin cuerpo (204) es valido.
 	const text = await response.text();

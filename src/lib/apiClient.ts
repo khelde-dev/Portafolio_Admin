@@ -7,11 +7,20 @@ export interface ServerIssue {
 	message: string;
 }
 
+/** Donde se usa una imagen (respuesta 409 al borrarla). */
+export interface ImageUsage {
+	resource: string;
+	id: number;
+	label: string;
+	field: string;
+}
+
 export class ApiFailure extends Error {
 	constructor(
 		readonly status: number,
 		message: string,
 		readonly issues: ServerIssue[] = [],
+		readonly usedBy: ImageUsage[] = [],
 	) {
 		super(message);
 		this.name = "ApiFailure";
@@ -48,8 +57,12 @@ export const apiRequest = async <T = unknown>(
 		throw new ApiFailure(0, SESSION_HINT);
 	}
 
-	let payload: { data?: T; message?: string; errors?: ServerIssue[] } | null =
-		null;
+	let payload: {
+		data?: T;
+		message?: string;
+		errors?: ServerIssue[];
+		usedBy?: ImageUsage[];
+	} | null = null;
 	try {
 		payload = await response.json();
 	} catch {
@@ -61,6 +74,7 @@ export const apiRequest = async <T = unknown>(
 			response.status,
 			payload?.message ?? "No se pudo completar la operación.",
 			Array.isArray(payload?.errors) ? payload.errors : [],
+			Array.isArray(payload?.usedBy) ? payload.usedBy : [],
 		);
 	}
 	return (payload?.data ?? null) as T;
@@ -71,4 +85,45 @@ export const api = {
 	post: <T>(url: string, body: unknown) => apiRequest<T>("POST", url, body),
 	put: <T>(url: string, body: unknown) => apiRequest<T>("PUT", url, body),
 	delete: <T>(url: string) => apiRequest<T>("DELETE", url),
+};
+
+/**
+ * Sube una imagen WebP ya convertida: cuerpo BINARIO (no JSON ni multipart), con
+ * `Content-Type: image/webp`. El servidor elige la clave y la devuelve.
+ */
+export interface UploadedImage {
+	key: string;
+	url: string | null;
+	size: number;
+	width: number;
+	height: number;
+}
+
+export const apiUpload = async (
+	folder: string,
+	blob: Blob,
+	fetcher: typeof fetch = fetch,
+): Promise<UploadedImage> => {
+	let response: Response;
+	try {
+		response = await fetcher(`/api/media?use=${encodeURIComponent(folder)}`, {
+			method: "POST",
+			headers: { Accept: "application/json", "Content-Type": "image/webp" },
+			body: blob,
+			credentials: "same-origin",
+		});
+	} catch {
+		throw new ApiFailure(0, SESSION_HINT);
+	}
+	const payload = (await response.json().catch(() => null)) as {
+		data?: UploadedImage;
+		message?: string;
+	} | null;
+	if (!response.ok || !payload?.data) {
+		throw new ApiFailure(
+			response.status,
+			payload?.message ?? "No se pudo subir la imagen.",
+		);
+	}
+	return payload.data;
 };
