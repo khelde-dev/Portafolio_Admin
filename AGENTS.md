@@ -23,6 +23,12 @@ Panel de administración (CMS) del portafolio de Erick González
 - Arquitectura completa, flujo de una petición y hoja de ruta en
   [`docs/ARQUITECTURA.md`](./docs/ARQUITECTURA.md). Léela antes de crear una
   pantalla, una ruta `/api/*` o una carpeta nueva.
+- **El plan del CMS** vive en [`docs/plan/`](./docs/plan/00-indice.md): qué
+  tablas se usan y cuáles no (la tabla `users` **no** se usa), endpoints del
+  backend, Zero Trust, imágenes siempre en WebP, validaciones, módulos y fases.
+  Antes de construir una pantalla, lee su capítulo y su fase en
+  [`11-roadmap.md`](./docs/plan/11-roadmap.md); una decisión nueva se anota ahí,
+  no solo en el PR.
 
 ## Infraestructura
 
@@ -30,7 +36,7 @@ Todo el stack vive en **Cloudflare** (V8 isolates, sin contenedores):
 
 | Pieza | Servicio |
 |---|---|
-| Admin (este repo, Astro SSR) | **Cloudflare Workers** (`@astrojs/cloudflare`), Worker `admin-portafolio` |
+| Admin (este repo, Astro SSR) | **Cloudflare Workers** (`@astrojs/cloudflare`), Worker `portafolio-admin` |
 | Puerta de entrada | **Cloudflare Access** (Zero Trust) delante del Worker |
 | API de contenido (`Backend_Portafolio`) | **Worker de Hono** |
 | Base de datos | **Cloudflare D1** (la usa el backend) |

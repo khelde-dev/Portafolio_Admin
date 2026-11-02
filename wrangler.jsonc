@@ -2,7 +2,7 @@
 	// Worker del panel de administracion (Astro SSR, adaptador @astrojs/cloudflare).
 	// Build: `pnpm build`   Deploy: `npx wrangler deploy` (Workers Builds, rama main).
 	"$schema": "node_modules/wrangler/config-schema.json",
-	"name": "admin-portafolio",
+	"name": "portafolio-admin",
 	"main": "@astrojs/cloudflare/entrypoints/server",
 	"compatibility_date": "2026-10-01",
 	"compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
