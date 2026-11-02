@@ -31,6 +31,12 @@ describe("buildBackendUrl", () => {
 	});
 });
 
+describe("buildBackendUrl (consulta)", () => {
+	it("un .. dentro de la consulta no es un segmento de la ruta", () => {
+		expect(() => buildBackendUrl("/projects?q=..")).not.toThrow();
+	});
+});
+
 describe("callBackend", () => {
 	it("manda el bearer y reenvia el JWT de Access", async () => {
 		const fetchMock = stubFetch(Response.json({ success: true }));

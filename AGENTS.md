@@ -122,8 +122,10 @@ todo el sistema. **El repositorio es público.**
   alcanzable en un build de producción.
 - **El navegador nunca habla con el backend.** Solo llama a las rutas
   `/api/*` de este mismo Worker (mismo origen). El backend se consume desde
-  `src/server/backendClient.ts`, que agrega el bearer y reenvía el JWT de
-  Access. `API_SECRET_TOKEN` solo se importa en `src/server/`; ningún
+  `src/server/backendClient.ts` (`fetch`, **sin axios**: un error de axios trae
+  el token en `config.headers`), que agrega el bearer y reenvía el JWT de
+  Access. Un `BackendError` lleva solo el estado HTTP, nunca el cuerpo ni las
+  cabeceras. Misma regla en `src/lib/api.ts` del portafolio. `API_SECRET_TOKEN` solo se importa en `src/server/`; ningún
   componente, isla ni hook puede importar de `@/server/`.
 - Toda ruta `/api/*` que cambie datos: verifica el usuario de Access, exige
   mismo origen, `application/json` y un tope de tamaño, y valida el cuerpo con
