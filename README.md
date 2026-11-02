@@ -79,6 +79,7 @@ seguridad y de diseño, están en [`AGENTS.md`](./AGENTS.md).
 
 ## Documentación
 
+- [`docs/plan/`](./docs/plan/00-indice.md): **plan completo del CMS** (alcance, base de datos, Zero Trust, imágenes en R2, validaciones, módulos, roadmap por fases)
 - [`docs/ARQUITECTURA.md`](./docs/ARQUITECTURA.md): estructura, flujo y hoja de ruta
 - [`docs/UI_STANDARDS.md`](./docs/UI_STANDARDS.md): sistema de diseño
 - [`docs/DocsCommiter.md`](./docs/DocsCommiter.md): prefijos de commit

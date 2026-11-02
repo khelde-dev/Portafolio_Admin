@@ -4,6 +4,11 @@ Panel de administración (CMS) del portafolio. Este documento fija **cómo está
 organizado y cómo se va a construir**, para que cada pantalla nueva siga el
 mismo camino. Cuando algo cambie de verdad, se cambia aquí en el mismo PR.
 
+> **Plan completo del CMS:** [`docs/plan/`](./plan/00-indice.md) (alcance, base de
+> datos, backend, Zero Trust, imágenes en R2, validaciones, módulos, UI, pruebas,
+> seguridad, roadmap y decisiones abiertas). Este documento resume la estructura
+> del código; el plan dice **qué se construye y en qué orden**.
+
 ## Qué es y qué no es
 
 - Es una app **Astro SSR + islas de React** en un Worker de Cloudflare que
