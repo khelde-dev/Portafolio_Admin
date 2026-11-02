@@ -1,0 +1,113 @@
+---
+import { MobileNav } from "@/components/MobileNav";
+import { NavList } from "@/components/NavList";
+import { ThemeMenu } from "@/components/ThemeMenu";
+import {
+	Breadcrumb,
+	BreadcrumbItem,
+	BreadcrumbLink,
+	BreadcrumbList,
+	BreadcrumbPage,
+	BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
+import Layout from "@/layouts/Layout.astro";
+import { findNavItem } from "@/lib/nav";
+
+interface Crumb {
+	label: string;
+	href?: string;
+}
+
+interface Props {
+	/** Titulo de la pestana (sin el sufijo). */
+	title: string;
+	/** `id` de lib/nav.ts del elemento activo del menu. */
+	activeId: string;
+	/** Migas despues del modulo; la ultima es la pagina actual. */
+	crumbs?: Crumb[];
+	/** Globos del menu: `{ mensajes: 3, comentarios: 1 }`. */
+	badges?: Record<string, number>;
+}
+
+const { title, activeId, crumbs = [], badges = {} } = Astro.props;
+const module = findNavItem(activeId);
+const trail: Crumb[] = [
+	...(module && activeId !== "panel"
+		? [
+				{
+					label: module.label,
+					href: crumbs.length > 0 ? module.href : undefined,
+				},
+			]
+		: []),
+	...crumbs,
+];
+const email = Astro.locals.user?.email ?? "";
+---
+
+<Layout title={`${title} · Admin`}>
+	<a
+		href="#contenido"
+		class="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-50 focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-primary-foreground"
+	>
+		Saltar al contenido
+	</a>
+
+	<div class="min-h-svh lg:grid lg:grid-cols-[15rem_minmax(0,1fr)]">
+		<aside
+			class="sticky top-0 hidden h-svh flex-col gap-6 overflow-y-auto border-r border-border bg-sidebar px-3 py-6 lg:flex"
+		>
+			<a
+				href="/"
+				class="flex items-baseline gap-2 px-3 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+			>
+				<span class="font-serif-display text-heading">Khelde</span>
+				<span class="eyebrow">admin</span>
+			</a>
+			<NavList activeId={activeId} badges={badges} />
+			<p class="mt-auto truncate px-3 text-sm text-muted-foreground" title={email}>
+				{email}
+			</p>
+		</aside>
+
+		<div class="flex min-w-0 flex-col">
+			<header
+				class="sticky top-0 z-30 flex min-h-16 items-center gap-3 border-b border-border bg-background/90 px-4 backdrop-blur sm:px-6"
+			>
+				<MobileNav client:load activeId={activeId} badges={badges} />
+				<Breadcrumb className="min-w-0 flex-1">
+					<BreadcrumbList>
+						<BreadcrumbItem>
+							{
+								trail.length === 0 ? (
+									<BreadcrumbPage>Panel</BreadcrumbPage>
+								) : (
+									<BreadcrumbLink href="/">Panel</BreadcrumbLink>
+								)
+							}
+						</BreadcrumbItem>
+						{
+							trail.map((crumb, i) => (
+								<>
+									<BreadcrumbSeparator />
+									<BreadcrumbItem>
+										{i === trail.length - 1 || !crumb.href ? (
+											<BreadcrumbPage>{crumb.label}</BreadcrumbPage>
+										) : (
+											<BreadcrumbLink href={crumb.href}>{crumb.label}</BreadcrumbLink>
+										)}
+									</BreadcrumbItem>
+								</>
+							))
+						}
+					</BreadcrumbList>
+				</Breadcrumb>
+				<ThemeMenu client:load />
+			</header>
+
+			<main id="contenido" class="mx-auto w-full max-w-5xl flex-1 px-4 py-8 sm:px-6 lg:py-10">
+				<slot />
+			</main>
+		</div>
+	</div>
+</Layout>
