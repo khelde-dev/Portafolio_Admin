@@ -1,0 +1,37 @@
+{
+	// Worker del panel de administracion (Astro SSR, adaptador @astrojs/cloudflare).
+	// Build: `pnpm build`   Deploy: `npx wrangler deploy` (Workers Builds, rama main).
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "admin-portafolio",
+	"main": "@astrojs/cloudflare/entrypoints/server",
+	"compatibility_date": "2026-10-01",
+	"compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+	"assets": {
+		"binding": "ASSETS",
+		"directory": "./dist"
+	},
+	"observability": { "enabled": true },
+
+	// Sin URLs de vista previa: este Worker se protege con Cloudflare Access y
+	// cada URL extra seria una puerta mas sin proteger.
+	"preview_urls": false,
+
+	// Variables de runtime NO secretas (las lee astro:env/server). Se declaran
+	// aqui para que un deploy no las borre. Las PUBLIC_* son de build: van en las
+	// variables de build del panel de Cloudflare, no aqui.
+	"vars": {
+		"BACKEND_URL": "https://backend-portafolio.erickm-gonzalez-rivera.workers.dev/api",
+		// De la aplicacion de Cloudflare Access que protege este Worker.
+		"ACCESS_TEAM_DOMAIN": "",
+		"ACCESS_AUD": ""
+	}
+
+	// SECRETO (no va en este archivo): API_SECRET_TOKEN
+	//   npx wrangler secret put API_SECRET_TOKEN
+	// o en el panel: Worker > Settings > Variables and Secrets > Secret.
+	//
+	// Cuando el backend ya no se llame por su URL publica, descomenta el
+	// Service Binding (el trafico no sale a internet y el backend puede dejar de
+	// aceptar la URL publica para el CMS):
+	// "services": [{ "binding": "BACKEND", "service": "backend-portafolio" }]
+}

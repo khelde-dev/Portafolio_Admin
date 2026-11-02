@@ -1,11 +1,25 @@
 ---
-import Welcome from '../components/Welcome.astro';
-import Layout from '../layouts/Layout.astro';
-
-// Welcome to Astro! Wondering what to do next? Check out the Astro documentation at https://docs.astro.build
-// Don't want to use any of this? Delete everything in this file, the `assets`, `components`, and `layouts` directories, and start fresh.
+import { PUBLIC_PORTFOLIO_URL } from "astro:env/client";
+import Layout from "@/layouts/Layout.astro";
 ---
 
-<Layout>
-	<Welcome />
+<Layout title="Admin · Portafolio">
+	<main class="mx-auto flex min-h-svh max-w-3xl flex-col justify-center gap-6 px-6 py-24">
+		<p class="eyebrow">Panel de administración</p>
+		<h1 class="font-serif-display text-title">Portafolio admin</h1>
+		<p class="max-w-[58ch] text-muted-foreground">
+			Esqueleto del CMS. No tiene pantalla de acceso: la identidad la
+			resuelve Cloudflare Access antes de que la petición llegue al Worker.
+		</p>
+		<p>
+			<a
+				class="text-primary underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+				href={PUBLIC_PORTFOLIO_URL}
+				rel="noopener noreferrer"
+				target="_blank"
+			>
+				Ver el portafolio público
+			</a>
+		</p>
+	</main>
 </Layout>
