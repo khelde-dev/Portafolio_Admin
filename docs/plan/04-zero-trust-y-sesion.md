@@ -8,13 +8,13 @@ El admin y el backend solo verifican ese JWT.
 
 ```
           ┌──────────────────────── Cloudflare ────────────────────────┐
- tú ────► │ Access (aplicación "admin-portafolio")                      │
+ tú ────► │ Access (aplicación "portafolio-admin")                      │
           │   política: permitir solo tu correo                         │
           │   método: código de un solo uso (OTP) por correo            │
           │   sesión: N horas  →  cookie CF_Authorization + JWT         │
           └───────────────┬─────────────────────────────────────────────┘
                           ▼  cabecera Cf-Access-Jwt-Assertion
-               Worker admin-portafolio  ──(mismo JWT)──►  Worker backend-portafolio
+               Worker portafolio-admin  ──(mismo JWT)──►  Worker backend-portafolio
                verifica firma, aud, iss, exp               verifica firma, aud, iss, exp
 ```
 
@@ -37,7 +37,7 @@ que las rutas del CMS exigen el JWT.
 ## Puesta en marcha (orden obligatorio)
 
 1. Desplegar el Worker del admin y comprobar que responde en
-   `admin-portafolio.<cuenta>.workers.dev`. Hasta aquí **no hay datos**: el
+   `portafolio-admin.<cuenta>.workers.dev`. Hasta aquí **no hay datos**: el
    esqueleto no llama al backend.
 2. **Crear la aplicación de Access** (Zero Trust → Access → Applications →
    Self-hosted) para ese hostname. En la pestaña del Worker hay un atajo

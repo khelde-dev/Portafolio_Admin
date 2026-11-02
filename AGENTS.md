@@ -36,7 +36,7 @@ Todo el stack vive en **Cloudflare** (V8 isolates, sin contenedores):
 
 | Pieza | Servicio |
 |---|---|
-| Admin (este repo, Astro SSR) | **Cloudflare Workers** (`@astrojs/cloudflare`), Worker `admin-portafolio` |
+| Admin (este repo, Astro SSR) | **Cloudflare Workers** (`@astrojs/cloudflare`), Worker `portafolio-admin` |
 | Puerta de entrada | **Cloudflare Access** (Zero Trust) delante del Worker |
 | API de contenido (`Backend_Portafolio`) | **Worker de Hono** |
 | Base de datos | **Cloudflare D1** (la usa el backend) |

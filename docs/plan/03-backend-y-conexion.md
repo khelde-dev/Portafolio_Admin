@@ -3,7 +3,7 @@
 ## Flujo de una petición
 
 ```
-Navegador (tú)                       Worker "admin-portafolio"                    Worker "backend-portafolio"
+Navegador (tú)                       Worker "portafolio-admin"                    Worker "backend-portafolio"
 ─────────────                        ─────────────────────────                    ───────────────────────────
 GET /proyectos  ──► Access ──────►   middleware: cabeceras + JWT
                     (login)          página SSR (HTML + isla)
