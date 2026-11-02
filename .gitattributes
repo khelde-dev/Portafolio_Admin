@@ -1,0 +1,16 @@
+# Finales de linea: LF en el repositorio y en el arbol de trabajo. Evita ruido
+# de CRLF en Windows y que los hooks de Husky (sh) fallen por un \r.
+* text=auto eol=lf
+
+.husky/* text eol=lf
+*.sh text eol=lf
+
+# Binarios: git no los toca.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.avif binary
+*.ico binary
+*.woff binary
+*.woff2 binary
