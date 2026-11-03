@@ -101,7 +101,9 @@ export const ImageUploader = ({
 
 	return (
 		<div className="flex flex-col gap-4">
-			<div>
+			{/* `relative`: el input oculto (sr-only) es absoluto y `w-full` del Input le gana
+			    a `sr-only`; sin un contenedor asomaba por la derecha y ensanchaba la pagina. */}
+			<div className="relative">
 				<Input
 					id={inputId}
 					type="file"

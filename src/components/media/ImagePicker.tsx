@@ -93,7 +93,7 @@ const PickerBody = ({
 			<TabsList
 				variant="line"
 				aria-label="Origen de la imagen"
-				className="h-auto flex-wrap"
+				className="w-full flex-wrap"
 			>
 				<TabsTrigger value="upload" className="min-h-11 px-4">
 					Subir nueva

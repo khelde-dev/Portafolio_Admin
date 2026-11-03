@@ -28,7 +28,9 @@ const tabsListVariants = cva(
 		variants: {
 			variant: {
 				default: "bg-muted",
-				line: "gap-1 bg-transparent",
+				// `line` no tiene fondo de pastilla: su altura es la del contenido (si las
+				// pestanas no caben pasan a otra fila en vez de salirse de una caja de 2 rem).
+				line: "gap-1 bg-transparent group-data-horizontal/tabs:h-auto",
 			},
 		},
 		defaultVariants: {

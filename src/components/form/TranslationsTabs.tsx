@@ -36,6 +36,10 @@ const MARKS: Record<Completeness, { label: string; icon: typeof Circle }> = {
 	empty: { label: "vacío", icon: Circle },
 };
 
+/** Idioma arriba y su estado debajo en movil; en una sola linea desde `sm`. */
+const TRIGGER =
+	"min-h-11 flex-col gap-0 px-2 py-1.5 sm:flex-row sm:gap-1.5 sm:px-4";
+
 /**
  * Pestanas ES / EN / FR. El espanol es la base y es obligatorio; EN y FR son
  * opcionales y, lo que falte, cae al espanol en el sitio. Cada pestana dice si
@@ -66,11 +70,12 @@ export const TranslationsTabs = ({ spanish, fields }: Props) => {
 			<TabsList
 				variant="line"
 				aria-label="Idioma del contenido"
-				className="h-auto flex-wrap"
+				// En movil son tres columnas iguales.
+				className="w-full"
 			>
-				<TabsTrigger value="es" className="min-h-11 px-4">
+				<TabsTrigger value="es" className={TRIGGER}>
 					{LOCALE_LABELS.es}
-					<span className="eyebrow ml-2">base</span>
+					<span className="eyebrow sm:ml-2">base</span>
 				</TabsTrigger>
 				{TRANSLATED_LOCALES.map((locale) => {
 					const state = completeness(values?.[locale], required);
@@ -79,9 +84,9 @@ export const TranslationsTabs = ({ spanish, fields }: Props) => {
 						get(formState.errors, `translations.${locale}`),
 					);
 					return (
-						<TabsTrigger key={locale} value={locale} className="min-h-11 px-4">
+						<TabsTrigger key={locale} value={locale} className={TRIGGER}>
 							{LOCALE_LABELS[locale]}
-							<span className="eyebrow ml-2 inline-flex items-center gap-1">
+							<span className="eyebrow inline-flex items-center gap-1 sm:ml-2">
 								<Icon aria-hidden="true" className="size-3.5" />
 								{hasError ? "revisar" : label}
 							</span>

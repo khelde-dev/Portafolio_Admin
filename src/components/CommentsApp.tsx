@@ -223,10 +223,14 @@ export const CommentsApp = ({ initial, initialError = null }: Props) => {
 				<TabsList
 					variant="line"
 					aria-label="Estado del comentario"
-					className="h-auto flex-wrap"
+					className="w-full flex-wrap"
 				>
 					{COMMENT_STATUSES.map((status) => (
-						<TabsTrigger key={status} value={status} className="min-h-11 px-4">
+						<TabsTrigger
+							key={status}
+							value={status}
+							className="min-h-11 px-2 sm:px-4"
+						>
 							{COMMENT_STATUS_LABELS[status]}
 							<span className="eyebrow ml-2">{byStatus[status].length}</span>
 						</TabsTrigger>
