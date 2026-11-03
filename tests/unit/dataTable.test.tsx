@@ -8,8 +8,9 @@ import {
 } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
-import { type Column, DataTable, PAGE_SIZES } from "@/components/DataTable";
+import { type Column, DataTable } from "@/components/DataTable";
 import { pageWindow } from "@/components/ListPagination";
+import { PAGE_SIZES } from "@/components/PageControls";
 import { setUrlParams, useUrlParam } from "@/hooks/useUrlParams";
 import { choose } from "./helpers/select";
 

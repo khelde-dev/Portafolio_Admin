@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 interface Props<T extends string> {
@@ -5,7 +6,7 @@ interface Props<T extends string> {
 	label: string;
 	value: T;
 	onValueChange: (value: T) => void;
-	options: readonly { value: T; label: string }[];
+	options: readonly { value: T; label: ReactNode }[];
 }
 
 /**

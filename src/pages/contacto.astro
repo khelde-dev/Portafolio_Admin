@@ -1,6 +1,7 @@
 ---
 import { ContactForm } from "@/components/contact/ContactForm";
 import PageHeader from "@/components/PageHeader.astro";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import AdminLayout from "@/layouts/AdminLayout.astro";
 import type { ContactRow } from "@/schemas/contact";
 import { loadList } from "@/server/data";
@@ -19,9 +20,9 @@ const { data, error } = await loadList<ContactRow | null>(
 	/>
 	{
 		error ? (
-			<p role="alert" class="rounded-lg border border-destructive/40 bg-destructive/5 px-4 py-3 font-medium text-destructive">
-				{error} <a class="underline underline-offset-4" href="/estado">Ver estado</a>
-			</p>
+			<Alert variant="destructive">
+<AlertDescription>{error} <a class="underline underline-offset-4" href="/estado">Ver estado</a></AlertDescription>
+</Alert>
 		) : (
 			<ContactForm client:load initial={data} />
 		)

@@ -1,6 +1,16 @@
 ---
 import { ActivityFilter } from "@/components/ActivityFilter";
+import { PageControls, pageOf, pageSizeOf } from "@/components/PageControls";
 import PageHeader from "@/components/PageHeader.astro";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+	Table,
+	TableBody,
+	TableCell,
+	TableHead,
+	TableHeader,
+	TableRow,
+} from "@/components/ui/table";
 import AdminLayout from "@/layouts/AdminLayout.astro";
 import {
 	type AuditEntry,
@@ -19,9 +29,18 @@ const { data, error } = await loadList<unknown>(
 );
 const all: AuditEntry[] = parseAudit(data);
 
+// El filtro, la pagina y el tamano viven en la URL (?recurso, ?pagina, ?por).
 const requested = Astro.url.searchParams.get("recurso");
 const resource = isKnownResource(requested) ? requested : null;
 const entries = resource ? all.filter((e) => e.resource === resource) : all;
+
+const pageSize = pageSizeOf(Astro.url.searchParams.get("por") ?? "");
+const pageCount = Math.max(1, Math.ceil(entries.length / pageSize));
+const page = Math.min(
+	pageOf(Astro.url.searchParams.get("pagina") ?? ""),
+	pageCount,
+);
+const shown = entries.slice((page - 1) * pageSize, page * pageSize);
 
 const DOT: Record<AuditEntry["action"], string> = {
 	create: "bg-primary",
@@ -45,9 +64,11 @@ const utc = (value: string) => {
 	/>
 	{
 		error ? (
-			<p role="alert" class="rounded-lg border border-destructive/40 bg-destructive/5 px-4 py-3 font-medium text-destructive">
-				{error} <a class="underline underline-offset-4" href="/estado">Ver estado</a>
-			</p>
+			<Alert variant="destructive">
+				<AlertDescription>
+					{error} <a class="underline underline-offset-4" href="/estado">Ver estado</a>
+				</AlertDescription>
+			</Alert>
 		) : (
 			<>
 				<div class="mb-6 flex flex-wrap items-end gap-3">
@@ -61,6 +82,7 @@ const utc = (value: string) => {
 
 				<p class="eyebrow mb-3" aria-live="polite">
 					{entries.length === 1 ? "1 cambio" : `${entries.length} cambios`}
+					{pageCount > 1 ? `, página ${page} de ${pageCount}` : ""}
 				</p>
 
 				{entries.length === 0 ? (
@@ -75,40 +97,58 @@ const utc = (value: string) => {
 						</p>
 					</div>
 				) : (
-					<ol class="divide-y divide-border border-y border-border">
-						{entries.map((entry) => {
-							const line = describeEntry(entry);
-							return (
-								<li class="grid items-baseline gap-x-6 gap-y-1 px-1 py-4 md:grid-cols-[11rem_minmax(0,1fr)_auto]">
-									<time
-										data-local
-										datetime={parseD1Date(entry.at)?.toISOString()}
-										class="eyebrow"
-									>
-										{utc(entry.at)}
-									</time>
-									<p class="min-w-0 break-words">
-										<span class="inline-flex items-center gap-2 font-medium">
-											<span aria-hidden="true" class={`size-2 rounded-full ${DOT[entry.action]}`} />
-											{line.verb}
-										</span>{" "}
-										{line.href ? (
-											<a
-												href={line.href}
-												class="underline decoration-border underline-offset-4 hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-											>
-												{line.label}
-											</a>
-										) : (
-											line.label
-										)}
-										{line.summary ? <span class="text-muted-foreground">{` «${line.summary}»`}</span> : null}
-									</p>
-									<p class="eyebrow break-all md:text-right">{entry.admin_email}</p>
-								</li>
-							);
-						})}
-					</ol>
+					<>
+						<Table aria-label="Cambios">
+							<TableHeader className="max-md:sr-only">
+								<TableRow>
+									<TableHead className="w-44">Cuándo</TableHead>
+									<TableHead>Qué</TableHead>
+									<TableHead className="md:text-right">Quién</TableHead>
+								</TableRow>
+							</TableHeader>
+							<TableBody>
+								{shown.map((entry) => {
+									const line = describeEntry(entry);
+									return (
+										<TableRow className="max-md:flex max-md:flex-wrap max-md:gap-x-4">
+											<TableCell className="whitespace-normal">
+												<time
+													data-local
+													datetime={parseD1Date(entry.at)?.toISOString()}
+													class="eyebrow"
+												>
+													{utc(entry.at)}
+												</time>
+											</TableCell>
+											<TableCell className="min-w-0 whitespace-normal break-words">
+												<span class="inline-flex items-center gap-2 font-medium">
+													<span aria-hidden="true" class={`size-2 rounded-full ${DOT[entry.action]}`} />
+													{line.verb}
+												</span>{" "}
+												{line.href ? (
+													<a
+														href={line.href}
+														class="underline decoration-border underline-offset-4 hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+													>
+														{line.label}
+													</a>
+												) : (
+													line.label
+												)}
+												{line.summary ? <span class="text-muted-foreground">{` «${line.summary}»`}</span> : null}
+											</TableCell>
+											<TableCell className="whitespace-normal break-all md:text-right">
+												<span class="eyebrow">{entry.admin_email}</span>
+											</TableCell>
+										</TableRow>
+									);
+								})}
+							</TableBody>
+						</Table>
+						<div class="mt-4">
+							<PageControls client:load page={page} pageCount={pageCount} pageSize={pageSize} reload />
+						</div>
+					</>
 				)}
 			</>
 		)
