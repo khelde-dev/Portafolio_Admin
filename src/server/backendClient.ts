@@ -35,7 +35,8 @@ export type FailReason =
 	| "bearer"
 	| "access-missing"
 	| "access-invalid"
-	| "access-unconfigured";
+	| "access-unconfigured"
+	| "stale";
 
 const REASONS: Record<string, FailReason> = {
 	"Invalid token": "bearer",
@@ -44,6 +45,9 @@ const REASONS: Record<string, FailReason> = {
 	"Falta la sesion de Cloudflare Access": "access-missing",
 	"Sesion de Access invalida": "access-invalid",
 	"Cloudflare Access no esta configurado": "access-unconfigured",
+	// 409 al editar: la fila cambio desde que se abrio el formulario.
+	"Este elemento cambió desde que lo abriste. Recarga para ver la versión nueva.":
+		"stale",
 };
 
 export const classifyReason = (payload: unknown): FailReason | null => {
@@ -199,7 +203,9 @@ export const callBackend = async <T = unknown>(
 			response.status,
 			response.status === 400 ? sanitizeIssues(body) : [],
 			response.status === 409 ? sanitizeUsage(body) : [],
-			[401, 403, 503].includes(response.status) ? classifyReason(body) : null,
+			[401, 403, 409, 503].includes(response.status)
+				? classifyReason(body)
+				: null,
 		);
 	}
 	// Sin cuerpo (204) es valido.

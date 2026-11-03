@@ -13,6 +13,10 @@ import {
 } from "@/server/backendClient";
 import { findResource, type ResourceConfig } from "@/server/resources";
 
+/** Lo que ve la persona cuando el formulario que tenia abierto ya no esta al dia. */
+export const STALE_MESSAGE =
+	"Este elemento cambió desde que lo abriste, quizá en otra pestaña. Recarga para ver la versión nueva; lo que escribiste aquí se perderá.";
+
 export type Op = "list" | "create" | "update" | "remove" | "order";
 
 export interface ProxyContext {
@@ -63,6 +67,10 @@ export const mapBackendError = (
 		case 404:
 			return fail(404, "Ese elemento ya no existe.");
 		case 409:
+			// Otra pestana (u otra sesion) guardo primero: no es un valor repetido.
+			if (error.reason === "stale") {
+				return json({ message: STALE_MESSAGE, stale: true }, 409);
+			}
 			return fail(
 				409,
 				config.conflictField?.message ?? "Ese valor ya existe.",

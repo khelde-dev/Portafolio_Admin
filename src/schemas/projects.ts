@@ -38,6 +38,8 @@ export const PROJECT_TEXT_FIELDS = {
 } as const;
 
 export const projectSchema = z.object({
+	// El `updated_at` que leyo el formulario: el backend responde 409 si la fila ya cambio.
+	updated_at: z.string().max(40).optional(),
 	slug,
 	category: z.enum(CATEGORIES, { error: "Elige una categoría" }),
 	status: z.enum(PROJECT_STATUSES).default("published"),

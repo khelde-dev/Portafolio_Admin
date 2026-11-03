@@ -202,3 +202,78 @@ describe("probeBackendAuth (la peticion real que usa Estado)", () => {
 		).toMatch(/No hubo respuesta/);
 	});
 });
+
+describe("edicion simultanea (409 por version)", () => {
+	const STALE =
+		"Este elemento cambió desde que lo abriste. Recarga para ver la versión nueva.";
+
+	it("el motivo se conserva en un 409, y un 409 de otro tipo no lo tiene", async () => {
+		vi.stubGlobal(
+			"fetch",
+			vi
+				.fn()
+				.mockResolvedValue(
+					Response.json({ success: false, message: STALE }, { status: 409 }),
+				),
+		);
+		const stale = (await callBackend("/x").catch((e) => e)) as InstanceType<
+			typeof BackendError
+		>;
+		expect(stale.status).toBe(409);
+		expect(stale.reason).toBe("stale");
+
+		vi.stubGlobal(
+			"fetch",
+			vi
+				.fn()
+				.mockResolvedValue(
+					Response.json(
+						{ success: false, message: "slug repetido" },
+						{ status: 409 },
+					),
+				),
+		);
+		const other = (await callBackend("/x").catch((e) => e)) as InstanceType<
+			typeof BackendError
+		>;
+		expect(other.reason).toBeNull();
+	});
+
+	it("el proxy responde 409 con stale: true y sin confundirlo con un valor repetido", async () => {
+		const call = vi
+			.fn()
+			.mockRejectedValue(new BackendError(409, [], [], "stale"));
+		const res = await handleResource(
+			{
+				request: new Request("http://localhost/api/projects/3", {
+					method: "PUT",
+					headers: {
+						"Content-Type": "application/json",
+						Origin: "http://localhost",
+					},
+					body: JSON.stringify({
+						slug: "a",
+						category: "frontend",
+						title_default: "t",
+						summary_default: "s",
+						description_default: "d",
+						card_image: "a.webp",
+						updated_at: "2026-01-01 10:00:00",
+					}),
+				}),
+				url: new URL("http://localhost/api/projects/3"),
+				params: { resource: "projects", id: "3" },
+			},
+			"update",
+			call,
+		);
+		expect(res.status).toBe(409);
+		const body = (await res.json()) as { message: string; stale?: boolean };
+		expect(body.stale).toBe(true);
+		expect(body.message).toMatch(/cambió desde que lo abriste/);
+		// La version leida viaja al backend dentro del cuerpo.
+		expect(call.mock.calls[0][1].body).toMatchObject({
+			updated_at: "2026-01-01 10:00:00",
+		});
+	});
+});

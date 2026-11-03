@@ -35,6 +35,8 @@ export const whatsappUrl = (phone: string): string =>
 	`https://wa.me/${phoneDigits(phone)}`;
 
 export const contactSchema = z.object({
+	// El `updated_at` que leyo el formulario: el backend responde 409 si la fila ya cambio.
+	updated_at: z.string().max(40).optional(),
 	github_url: siteUrl("github.com", "GitHub"),
 	linkedin_url: siteUrl("linkedin.com", "LinkedIn"),
 	linkedin_name: z
