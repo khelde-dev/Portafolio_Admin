@@ -39,7 +39,7 @@ vi.mock("astro:env/client", () => ({
 	PUBLIC_MEDIA_URL: "https://media.example.dev",
 	PUBLIC_ICONS_URL: "https://icons.example.dev/api/icons",
 }));
-vi.mock("react-hot-toast", () => ({ default: { success: vi.fn() } }));
+vi.mock("@/components/Toaster", () => ({ toast: { success: vi.fn() } }));
 
 const experience = (over: Partial<ExperienceRow> = {}): ExperienceRow => ({
 	experience_id: 1,

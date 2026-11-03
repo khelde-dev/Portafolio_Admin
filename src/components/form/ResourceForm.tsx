@@ -6,8 +6,8 @@ import {
 	type Resolver,
 	useForm,
 } from "react-hook-form";
-import toast from "react-hot-toast";
 import type { ZodType } from "zod";
+import { toast } from "@/components/Toaster";
 import { Alert, AlertAction, AlertDescription } from "@/components/ui/alert";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { ApiFailure } from "@/lib/apiClient";

@@ -17,9 +17,9 @@ import { ApiFailure } from "@/lib/apiClient";
 import { translationsField } from "@/schemas/common";
 import { choose } from "../helpers/select";
 
-vi.mock("react-hot-toast", () => ({ default: { success: vi.fn() } }));
+vi.mock("@/components/Toaster", () => ({ toast: { success: vi.fn() } }));
 
-import toast from "react-hot-toast";
+import { toast } from "@/components/Toaster";
 
 const schema = z.object({
 	title: z.string().trim().min(1, "El título es obligatorio"),

@@ -1,5 +1,6 @@
 ---
 import "@/styles/app.css";
+import { THEME_SCRIPT } from "@/lib/inlineScripts";
 
 interface Props {
 	title: string;
@@ -17,19 +18,9 @@ const { title } = Astro.props;
 		<meta name="color-scheme" content="light dark" />
 		<title>{title}</title>
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<script is:inline>
-			// Tema antes del primer pintado (sin parpadeo). Misma logica que
-			// src/lib/theme.ts: "light"/"dark" guardado, o el del sistema.
-			(function () {
-				var dark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-				try {
-					var stored = localStorage.getItem("theme");
-					if (stored === "light" || stored === "dark") dark = stored === "dark";
-				} catch (_) {}
-				document.documentElement.classList.toggle("dark", dark);
-				document.documentElement.style.colorScheme = dark ? "dark" : "light";
-			})();
-		</script>
+		<!-- Tema antes del primer pintado (sin parpadeo). El texto sale de
+		     src/lib/inlineScripts.ts, de donde astro.config.mjs calcula su hash. -->
+		<script is:inline set:html={THEME_SCRIPT}></script>
 	</head>
 	<body>
 		<slot />
