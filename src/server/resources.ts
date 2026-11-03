@@ -1,4 +1,5 @@
 import type { ZodType } from "zod";
+import { contactSchema } from "@/schemas/contact";
 import {
 	aboutSchema,
 	educationSchema,
@@ -82,6 +83,13 @@ export const RESOURCES: Record<string, ResourceConfig> = {
 		listPath: "/about/admin",
 		basePath: "/about",
 		schema: aboutSchema,
+		update: true,
+		singleton: true,
+	},
+	"contact-info": {
+		listPath: "/contact-info/admin",
+		basePath: "/contact-info",
+		schema: contactSchema,
 		update: true,
 		singleton: true,
 	},

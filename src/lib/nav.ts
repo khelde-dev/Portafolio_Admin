@@ -13,6 +13,7 @@ export type NavIcon =
 	| "skills"
 	| "about"
 	| "media"
+	| "contact"
 	| "status"
 	| "account";
 
@@ -77,7 +78,15 @@ export const NAV: NavGroup[] = [
 	},
 	{
 		label: "Sitio",
-		items: [{ id: "medios", label: "Medios", href: "/medios", icon: "media" }],
+		items: [
+			{ id: "medios", label: "Medios", href: "/medios", icon: "media" },
+			{
+				id: "contacto",
+				label: "Contacto",
+				href: "/contacto",
+				icon: "contact",
+			},
+		],
 	},
 	{
 		label: "Sistema",

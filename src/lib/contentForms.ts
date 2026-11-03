@@ -1,5 +1,6 @@
 import { emptyPeriod, type PeriodValue, parsePeriod } from "@/lib/period";
 import { normalizeTranslations, type TranslationMap } from "@/lib/translations";
+import type { ContactRow } from "@/schemas/contact";
 import {
 	ABOUT_TEXT_FIELDS,
 	type AboutRow,
@@ -134,4 +135,23 @@ export const aboutValues = (row: AboutRow | null | undefined): AboutValues => ({
 		row?.translations,
 		Object.keys(ABOUT_TEXT_FIELDS),
 	),
+});
+
+export interface ContactValues {
+	github_url: string;
+	linkedin_url: string;
+	linkedin_name: string;
+	phone: string;
+	email: string;
+}
+
+/** Los datos de contacto son una sola fila y puede no existir: entonces arranca vacio. */
+export const contactValues = (
+	row: ContactRow | null | undefined,
+): ContactValues => ({
+	github_url: row?.github_url ?? "",
+	linkedin_url: row?.linkedin_url ?? "",
+	linkedin_name: row?.linkedin_name ?? "",
+	phone: row?.phone ?? "",
+	email: row?.email ?? "",
 });
