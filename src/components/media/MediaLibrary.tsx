@@ -1,6 +1,7 @@
 import { Trash2 } from "lucide-react";
 import { useId, useMemo, useState } from "react";
 import { ConfirmDelete } from "@/components/ConfirmDelete";
+import { SimpleSelect } from "@/components/form/SimpleSelect";
 import { ImageUploader } from "@/components/media/ImageUploader";
 import { MediaGrid } from "@/components/media/MediaGrid";
 import {
@@ -109,18 +110,15 @@ export const MediaLibrary = ({ initial, initialError = null }: Props) => {
 						>
 							¿Para qué es?
 						</label>
-						<select
+						<SimpleSelect
 							id={useSelectId}
 							value={use}
-							onChange={(event) => setUse(event.target.value as UploadUse)}
-							className="min-h-11 rounded-lg border border-input bg-background px-3 text-base focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
-						>
-							{Object.entries(UPLOAD_USES).map(([value, spec]) => (
-								<option key={value} value={value}>
-									{spec.label}
-								</option>
-							))}
-						</select>
+							onValueChange={(value) => setUse(value as UploadUse)}
+							options={Object.entries(UPLOAD_USES).map(([value, spec]) => ({
+								value,
+								label: spec.label,
+							}))}
+						/>
 					</div>
 					<ImageUploader use={use} onUploaded={() => void reload()} />
 				</div>
