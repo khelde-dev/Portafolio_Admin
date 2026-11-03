@@ -1,5 +1,4 @@
 import { ArrowDown, ArrowUp, ImagePlus, X } from "lucide-react";
-import { useState } from "react";
 import { get, useFormContext } from "react-hook-form";
 import { FieldShell, fieldIds } from "@/components/form/fields";
 import { ImageUploader } from "@/components/media/ImageUploader";
@@ -17,6 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useResource } from "@/hooks/useResource";
+import { useUrlParam } from "@/hooks/useUrlParams";
 import type { UploadUse } from "@/lib/webp";
 
 interface DialogProps {
@@ -27,6 +27,18 @@ interface DialogProps {
 	selected?: readonly string[];
 	onPick: (key: string) => void;
 }
+
+/**
+ * El selector de imagen de un campo vive en la URL (`?elegir=<campo>`): se puede
+ * recargar abierto y Atras lo cierra. Solo uno a la vez.
+ */
+const usePickerOpen = (name: string) => {
+	const [current, setCurrent] = useUrlParam("elegir");
+	return [
+		current === name,
+		(open: boolean) => setCurrent(open ? name : "", { push: open }),
+	] as const;
+};
 
 /** Sube una imagen nueva o elige una de la biblioteca. */
 export const MediaPickerDialog = ({
@@ -69,8 +81,15 @@ const PickerBody = ({
 	onPick: (key: string) => void;
 }) => {
 	const library = useResource<MediaListing>("/api/media");
+	// De donde sale la imagen (?origen=biblioteca): tambien queda en la URL.
+	const [sourceRaw, setSource] = useUrlParam("origen", "upload");
+	const source = sourceRaw === "library" ? "library" : "upload";
 	return (
-		<Tabs defaultValue="upload" className="gap-5">
+		<Tabs
+			value={source}
+			onValueChange={(value) => setSource(value as string)}
+			className="gap-5"
+		>
 			<TabsList
 				variant="line"
 				aria-label="Origen de la imagen"
@@ -126,7 +145,7 @@ export const ImagePickerField = ({
 	required,
 }: FieldProps) => {
 	const { watch, setValue, formState } = useFormContext();
-	const [open, setOpen] = useState(false);
+	const [open, setOpen] = usePickerOpen(name);
 	const value = (watch(name) as string | undefined) ?? "";
 	const error = (
 		get(formState.errors, name) as { message?: string } | undefined
@@ -196,7 +215,7 @@ export const GalleryField = ({
 	use,
 }: Omit<FieldProps, "required">) => {
 	const { watch, setValue, formState } = useFormContext();
-	const [open, setOpen] = useState(false);
+	const [open, setOpen] = usePickerOpen(name);
 	const keys = ((watch(name) as string[] | undefined) ?? []).filter(Boolean);
 	const error = (
 		get(formState.errors, name) as { message?: string } | undefined

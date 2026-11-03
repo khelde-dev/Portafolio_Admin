@@ -2,6 +2,14 @@
 import { ACCESS_AUD, ACCESS_TEAM_DOMAIN, ADMIN_EMAILS } from "astro:env/server";
 import PageHeader from "@/components/PageHeader.astro";
 import { Badge } from "@/components/ui/badge";
+import {
+	Table,
+	TableBody,
+	TableCell,
+	TableHead,
+	TableHeader,
+	TableRow,
+} from "@/components/ui/table";
 import AdminLayout from "@/layouts/AdminLayout.astro";
 import {
 	backendChannel,
@@ -80,21 +88,33 @@ const checks = [
 		</div>
 	</dl>
 
-	<ul class="divide-y divide-border rounded-lg border border-border bg-card">
-		{
-			checks.map((check) => (
-				<li class="flex flex-wrap items-center gap-x-4 gap-y-1 px-5 py-4">
-					<span class="min-w-0 flex-1">{check.label}</span>
-					{check.ok ? (
-						<Badge variant="secondary">Correcto</Badge>
-					) : (
-						<Badge variant="destructive">Revisar</Badge>
-					)}
-					{!check.ok ? (
-						<p class="w-full text-sm text-muted-foreground">{check.hint}</p>
-					) : null}
-				</li>
-			))
-		}
-	</ul>
+	<Table aria-label="Comprobaciones">
+		<TableHeader>
+			<TableRow>
+				<TableHead>Comprobación</TableHead>
+				<TableHead className="w-32">Resultado</TableHead>
+			</TableRow>
+		</TableHeader>
+		<TableBody>
+			{
+				checks.map((check) => (
+					<TableRow>
+						<TableCell className="whitespace-normal">
+							<p>{check.label}</p>
+							{!check.ok ? (
+								<p class="mt-1 text-sm text-muted-foreground">{check.hint}</p>
+							) : null}
+						</TableCell>
+						<TableCell className="align-top">
+							{check.ok ? (
+								<Badge variant="secondary">Correcto</Badge>
+							) : (
+								<Badge variant="destructive">Revisar</Badge>
+							)}
+						</TableCell>
+					</TableRow>
+				))
+			}
+		</TableBody>
+	</Table>
 </AdminLayout>

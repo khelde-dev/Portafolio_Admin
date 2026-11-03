@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { get, useFormContext, useWatch } from "react-hook-form";
 import { TextareaField, TextField } from "@/components/form/fields";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useUrlParam } from "@/hooks/useUrlParams";
 import {
 	type Completeness,
 	completeness,
@@ -45,12 +46,23 @@ export const TranslationsTabs = ({ spanish, fields }: Props) => {
 	const values = useWatch({ control, name: "translations" }) as
 		| Partial<Record<TranslatedLocale, Record<string, string>>>
 		| undefined;
+	// El idioma que se esta editando vive en la URL (?idioma=en).
+	const [localeRaw, setLocale] = useUrlParam("idioma", "es");
+	const locale =
+		localeRaw === "es" ||
+		(TRANSLATED_LOCALES as readonly string[]).includes(localeRaw)
+			? localeRaw
+			: "es";
 	const required = fields
 		.filter((f) => f.required !== false)
 		.map((f) => f.name);
 
 	return (
-		<Tabs defaultValue="es" className="gap-5">
+		<Tabs
+			value={locale}
+			onValueChange={(value) => setLocale(value as string, { push: true })}
+			className="gap-5"
+		>
 			<TabsList
 				variant="line"
 				aria-label="Idioma del contenido"

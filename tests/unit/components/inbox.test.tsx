@@ -72,9 +72,49 @@ describe("InboxApp", () => {
 		await userEvent.click(
 			within(filters).getByRole("button", { name: /Leídos/ }),
 		);
-		const list = screen.getByRole("list", { name: "Mensajes" });
+		const list = screen.getByRole("table", { name: "Mensajes" });
 		expect(within(list).getByText("Beto")).toBeInTheDocument();
 		expect(within(list).queryByText("Ana Pérez")).toBeNull();
+	});
+
+	it("el filtro, el mensaje abierto y el modal de borrar viven en la URL", async () => {
+		vi.spyOn(api, "put").mockResolvedValue(null);
+		render(
+			<InboxApp
+				initial={[
+					message(),
+					message({ message_id: 2, name: "Beto", status: "read" }),
+				]}
+			/>,
+		);
+		await userEvent.click(screen.getByRole("button", { name: /Leídos/ }));
+		expect(window.location.search).toBe("?estado=read");
+		await userEvent.click(screen.getByRole("button", { name: /Beto/ }));
+		expect(window.location.search).toBe("?estado=read&mensaje=2");
+		await userEvent.click(screen.getByRole("button", { name: "Borrar" }));
+		expect(window.location.search).toBe("?estado=read&mensaje=2&borrar=2");
+		expect(await screen.findByRole("alertdialog")).toBeInTheDocument();
+		await userEvent.click(screen.getByRole("button", { name: "Cancelar" }));
+		expect(window.location.search).toBe("?estado=read&mensaje=2");
+		await userEvent.click(
+			screen.getByRole("button", { name: /Volver a la lista/ }),
+		);
+		expect(window.location.search).toBe("?estado=read");
+	});
+
+	it("abre directo en el mensaje que dice la URL", () => {
+		window.history.replaceState(null, "", "/?mensaje=2");
+		render(
+			<InboxApp
+				initial={[
+					message(),
+					message({ message_id: 2, name: "Beto", status: "read" }),
+				]}
+			/>,
+		);
+		expect(
+			screen.getByRole("heading", { level: 2, name: "Beto" }),
+		).toBeInTheDocument();
 	});
 
 	it("abrir un mensaje sin leer lo marca leido (optimista) y lo guarda", async () => {

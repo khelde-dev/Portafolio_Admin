@@ -9,6 +9,7 @@ import { MediaImage } from "@/components/media/MediaImage";
 import { MoveButtons, OrderBar } from "@/components/OrderControls";
 import { StatusBadge } from "@/components/StatusBadge";
 import { EmptyState, ErrorState } from "@/components/states";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useDeleteTarget } from "@/hooks/useDeleteTarget";
@@ -309,12 +310,9 @@ export const ProjectsApp = ({
 	return (
 		<>
 			{notice ? (
-				<p
-					role="alert"
-					className="mb-5 rounded-lg border border-destructive/40 bg-destructive/5 px-4 py-3 font-medium text-destructive"
-				>
-					{notice}
-				</p>
+				<Alert variant="destructive" className="mb-5">
+					<AlertDescription>{notice}</AlertDescription>
+				</Alert>
 			) : null}
 
 			<OrderBar

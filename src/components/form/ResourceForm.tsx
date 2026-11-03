@@ -8,6 +8,7 @@ import {
 } from "react-hook-form";
 import toast from "react-hot-toast";
 import type { ZodType } from "zod";
+import { Alert, AlertAction, AlertDescription } from "@/components/ui/alert";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { ApiFailure } from "@/lib/apiClient";
 import { issuesToFieldErrors } from "@/lib/formErrors";
@@ -129,22 +130,21 @@ export function ResourceForm<TValues extends FieldValues>({
 		<FormProvider {...form}>
 			<form onSubmit={handleSave} noValidate className="flex flex-col gap-10">
 				{formError ? (
-					<div
-						role="alert"
-						className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-destructive/40 bg-destructive/5 px-4 py-3 font-medium text-destructive"
-					>
-						<p className="min-w-0 flex-1">{formError}</p>
+					<Alert variant="destructive" className={stale ? "pr-28" : undefined}>
+						<AlertDescription>{formError}</AlertDescription>
 						{stale ? (
-							<Button
-								type="button"
-								variant="outline"
-								className="min-h-11"
-								onClick={() => window.location.reload()}
-							>
-								Recargar
-							</Button>
+							<AlertAction>
+								<Button
+									type="button"
+									variant="outline"
+									size="sm"
+									onClick={() => window.location.reload()}
+								>
+									Recargar
+								</Button>
+							</AlertAction>
 						) : null}
-					</div>
+					</Alert>
 				) : null}
 
 				{children}
