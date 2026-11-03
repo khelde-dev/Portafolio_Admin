@@ -6,7 +6,12 @@ import { FilterToggle } from "@/components/form/FilterToggle";
 import { SimpleSelect } from "@/components/form/SimpleSelect";
 import { LocalTime } from "@/components/LocalTime";
 import { MediaImage } from "@/components/media/MediaImage";
-import { MoveButtons, OrderBar } from "@/components/OrderControls";
+import {
+	OrderBar,
+	OrderIntro,
+	OrderModeButton,
+} from "@/components/OrderControls";
+import { SortableList } from "@/components/SortableList";
 import { StatusBadge } from "@/components/StatusBadge";
 import { EmptyState, ErrorState } from "@/components/states";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -65,6 +70,10 @@ export const ProjectsApp = ({
 		: "";
 	const [busy, setBusy] = useState(false);
 	const categoryId = useId();
+	// El modo ordenar vive en la URL (?orden=1) y muestra los proyectos completos.
+	const [orderingRaw, setOrdering] = useUrlParam("orden", "");
+	const ordering = orderingRaw === "1";
+	const toggleOrdering = () => setOrdering(ordering ? "" : "1", { push: true });
 
 	const { rows, replace } = order;
 	const { deleting, requestDelete, cancelDelete } = useDeleteTarget(
@@ -193,10 +202,12 @@ export const ProjectsApp = ({
 				]}
 				className="w-auto min-w-56"
 			/>
+			{rows.length > 1 ? (
+				<OrderModeButton active={false} onToggle={toggleOrdering} />
+			) : null}
 		</div>
 	);
 
-	const canReorder = filter === "all" && category === "";
 	const columns: Column<ProjectRow>[] = [
 		{
 			id: "image",
@@ -246,17 +257,8 @@ export const ProjectsApp = ({
 			hideHeader: true,
 			className: "md:w-px md:whitespace-nowrap max-md:w-full",
 			cell: (row) => {
-				const index = rows.findIndex((r) => r.project_id === row.project_id);
 				return (
 					<div className="flex items-center gap-0.5 max-md:flex-wrap">
-						{canReorder ? (
-							<MoveButtons
-								name={row.title_default}
-								index={index}
-								count={rows.length}
-								onMove={(delta) => order.move(index, delta)}
-							/>
-						) : null}
 						<a
 							href={`/proyectos/${row.project_id}`}
 							className={cn(
@@ -323,24 +325,49 @@ export const ProjectsApp = ({
 				onDiscard={order.discard}
 			/>
 
-			<DataTable
-				rows={visible}
-				getId={getId}
-				label="Proyectos"
-				searchLabel="Buscar proyecto"
-				searchText={(r) =>
-					`${r.title_default} ${r.slug} ${r.images_topics.join(" ")}`
-				}
-				filters={filters}
-				empty={null}
-				columns={columns}
-			/>
-			{filter !== "all" || category !== "" ? (
-				<p className="mt-3 text-sm text-muted-foreground">
-					Para cambiar el orden, quita los filtros: el orden se edita sobre la
-					lista completa.
-				</p>
-			) : null}
+			{ordering ? (
+				<>
+					<OrderIntro
+						count={rows.length}
+						noun="proyectos"
+						active
+						onToggle={toggleOrdering}
+					/>
+					<SortableList
+						rows={rows}
+						getId={getId}
+						getTitle={(row) => row.title_default}
+						describe={(row) => (
+							<>
+								/{row.slug}, {CATEGORY_LABELS[row.category]},{" "}
+								{PROJECT_STATUS_LABELS[row.status]}
+							</>
+						)}
+						thumb={(row) => (
+							<MediaImage
+								mediaKey={row.card_image}
+								loading="lazy"
+								className="size-14 shrink-0 rounded-lg border border-border bg-muted object-cover"
+							/>
+						)}
+						onMoveTo={order.moveTo}
+						label="Orden de proyectos"
+					/>
+				</>
+			) : (
+				<DataTable
+					rows={visible}
+					getId={getId}
+					label="Proyectos"
+					searchLabel="Buscar proyecto"
+					searchText={(r) =>
+						`${r.title_default} ${r.slug} ${r.images_topics.join(" ")}`
+					}
+					filters={filters}
+					empty={null}
+					columns={columns}
+				/>
+			)}
 
 			<ConfirmDelete
 				open={deleting !== null}

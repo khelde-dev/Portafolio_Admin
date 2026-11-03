@@ -14,6 +14,7 @@ export type NavIcon =
 	| "about"
 	| "media"
 	| "contact"
+	| "copy"
 	| "activity"
 	| "status"
 	| "account";
@@ -81,6 +82,7 @@ export const NAV: NavGroup[] = [
 		label: "Sitio",
 		items: [
 			{ id: "medios", label: "Medios", href: "/medios", icon: "media" },
+			{ id: "textos", label: "Textos", href: "/textos", icon: "copy" },
 			{
 				id: "contacto",
 				label: "Contacto",

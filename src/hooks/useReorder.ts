@@ -24,7 +24,7 @@ export const moveItem = <T>(
 };
 
 /**
- * Orden editable de una lista: se mueve con botones (Subir/Bajar) y se guarda
+ * Orden editable de una lista: se mueve arrastrando o con botones (Subir/Bajar) y se guarda
  * todo junto con "Guardar orden" (`PUT /api/<recurso>/order`, una transaccion).
  * `sort_order` queda igual a la posicion (0, 1, 2…).
  */
@@ -47,6 +47,11 @@ export const useReorder = <T>(
 
 	const move = useCallback((from: number, delta: number) => {
 		setRows((list) => moveItem(list, from, from + delta));
+	}, []);
+
+	/** Lleva el elemento de la posicion `from` a la `to` (arrastrar y soltar). */
+	const moveTo = useCallback((from: number, to: number) => {
+		setRows((list) => moveItem(list, from, to));
 	}, []);
 
 	/** Reemplaza las filas (tras crear, borrar o recargar) y toma ese orden como el guardado. */
@@ -87,5 +92,5 @@ export const useReorder = <T>(
 		setError(null);
 	}, [saved, getId]);
 
-	return { rows, move, replace, save, discard, dirty, saving, error };
+	return { rows, move, moveTo, replace, save, discard, dirty, saving, error };
 };
