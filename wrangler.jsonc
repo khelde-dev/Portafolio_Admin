@@ -26,14 +26,15 @@
 		// dominio lleva https:// y el MISMO valor va en el backend.
 		"ACCESS_TEAM_DOMAIN": "https://throbbing-lake-8623.cloudflareaccess.com",
 		"ACCESS_AUD": "a285709a3ab3c0bdfcfa01e6366d6a621602007ef0a8a51865745f2cd327b340"
-	}
+	},
 
 	// SECRETO (no va en este archivo): API_SECRET_TOKEN
 	//   npx wrangler secret put API_SECRET_TOKEN
 	// o en el panel: Worker > Settings > Variables and Secrets > Secret.
 	//
-	// Cuando el backend ya no se llame por su URL publica, descomenta el
-	// Service Binding (el trafico no sale a internet y el backend puede dejar de
-	// aceptar la URL publica para el CMS):
-	// "services": [{ "binding": "BACKEND", "service": "backend-portafolio" }]
+	// Service Binding al Worker del backend: la llamada pasa de un Worker al otro
+	// dentro de Cloudflare, sin salir a internet. Solo se usa en el Worker desplegado
+	// (src/server/backendClient.ts); en `pnpm dev` y si el binding falta, se llama por
+	// BACKEND_URL. El nombre del servicio es el `name` de wrangler.jsonc del backend.
+	"services": [{ "binding": "BACKEND", "service": "backend-portafolio" }]
 }

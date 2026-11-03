@@ -18,6 +18,9 @@ export interface BackendHealth {
  * `GET /api` del backend es publico (responde antes del bearer): sirve para
  * saber si esta vivo y que version corre, sin gastar una consulta de datos.
  */
+/** `binding` = por el Service Binding (sin salir a internet); `url` = por la URL publica. */
+export { backendChannel } from "@/server/backendClient";
+
 export const getBackendHealth = async (
 	call: typeof callBackend = callBackend,
 	now: () => number = Date.now,
