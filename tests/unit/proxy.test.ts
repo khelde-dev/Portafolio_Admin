@@ -77,7 +77,6 @@ describe("lista blanca de recursos", () => {
 
 	it.each([
 		["comments", "create"],
-		["comments", "remove"],
 		["contact-messages", "create"],
 		["about", "create"],
 		["about", "remove"],
@@ -92,6 +91,19 @@ describe("lista blanca de recursos", () => {
 		);
 		expect(res.status).toBe(405);
 		expect(call).not.toHaveBeenCalled();
+	});
+});
+
+describe("comentarios: se puede borrar (solo desde Ocultos en la interfaz)", () => {
+	it("DELETE llama al backend con el id", async () => {
+		const call = ok({});
+		const res = await handleResource(
+			ctx("DELETE", "comments", { id: "4" }),
+			"remove",
+			call,
+		);
+		expect(res.status).toBe(200);
+		expect(call.mock.calls[0][0]).toBe("/comments/4");
 	});
 });
 

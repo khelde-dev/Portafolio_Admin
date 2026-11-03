@@ -90,6 +90,8 @@ export const RESOURCES: Record<string, ResourceConfig> = {
 		basePath: "/comments",
 		schema: commentStatusSchema,
 		update: true,
+		// Borrado definitivo: el admin solo lo ofrece desde "Ocultos".
+		remove: true,
 	},
 	"contact-messages": {
 		listPath: "/contact-messages",
