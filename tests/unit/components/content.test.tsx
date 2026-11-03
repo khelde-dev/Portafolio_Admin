@@ -33,6 +33,7 @@ import {
 	experienceSchema,
 	skillSchema,
 } from "@/schemas/content";
+import { choose } from "../helpers/select";
 
 vi.mock("astro:env/client", () => ({
 	PUBLIC_MEDIA_URL: "https://media.example.dev",
@@ -273,8 +274,8 @@ describe("formularios de contenido", () => {
 		expect(screen.queryByLabelText("Año de fin")).not.toBeInTheDocument();
 
 		await userEvent.click(current);
-		await userEvent.selectOptions(screen.getByLabelText("Año de fin"), "2024");
-		await userEvent.selectOptions(screen.getByLabelText("Mes de fin"), "6");
+		await choose("Año de fin", "2024");
+		await choose("Mes de fin", "Jun");
 		await userEvent.click(
 			screen.getByRole("button", { name: "Guardar cambios" }),
 		);
@@ -301,7 +302,7 @@ describe("formularios de contenido", () => {
 		await userEvent.click(
 			screen.getByRole("checkbox", { name: "Actualmente trabajo aquí" }),
 		);
-		await userEvent.selectOptions(screen.getByLabelText("Año de fin"), "2020");
+		await choose("Año de fin", "2020");
 		expect(
 			await screen.findByText(
 				"La fecha de fin no puede ser anterior al inicio",

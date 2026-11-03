@@ -6,6 +6,8 @@ import { afterEach, beforeEach, vi } from "vitest";
 if (typeof window !== "undefined") {
 	afterEach(() => {
 		cleanup();
+		// Filtros, pagina y modales viven en la URL: cada prueba empieza en una limpia.
+		window.history.replaceState(null, "", "/");
 		// Open menus/dialogs lock the body (pointer-events) and leave portals
 		// behind; the next test must start from a clean document.
 		document.body.removeAttribute("style");

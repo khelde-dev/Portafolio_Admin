@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { Controller, get, useFormContext } from "react-hook-form";
+import { SimpleSelect } from "@/components/form/SimpleSelect";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -154,26 +155,30 @@ export const SelectField = ({
 	options: readonly { value: string; label: string }[];
 	placeholder?: string;
 }) => {
-	const { register } = useFormContext();
+	const { control } = useFormContext();
 	const error = useFieldError(name);
 	const id = domId(name);
 	return (
-		// Un <select> nativo: teclado, lectores de pantalla y movil resueltos.
 		<FieldShell id={id} error={error} {...shell}>
-			<select
-				id={id}
-				aria-invalid={error ? true : undefined}
-				aria-describedby={describedBy(id, Boolean(shell.hint), Boolean(error))}
-				className="min-h-11 w-full rounded-lg border border-input bg-background px-3 text-base focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none aria-invalid:border-destructive"
-				{...register(name)}
-			>
-				<option value="">{placeholder}</option>
-				{options.map((o) => (
-					<option key={o.value} value={o.value}>
-						{o.label}
-					</option>
-				))}
-			</select>
+			<Controller
+				control={control}
+				name={name}
+				render={({ field }) => (
+					<SimpleSelect
+						id={id}
+						value={(field.value as string | undefined) ?? ""}
+						onValueChange={field.onChange}
+						options={options}
+						placeholder={placeholder}
+						aria-invalid={error ? true : undefined}
+						aria-describedby={describedBy(
+							id,
+							Boolean(shell.hint),
+							Boolean(error),
+						)}
+					/>
+				)}
+			/>
 		</FieldShell>
 	);
 };

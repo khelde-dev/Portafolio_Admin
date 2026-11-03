@@ -236,11 +236,80 @@ describe("ProjectsApp", () => {
 	it("filtra por estado y por categoria, y entonces no se puede reordenar", async () => {
 		render(<ProjectsApp initial={two} siteUrl="https://s.dev" />);
 		await userEvent.click(screen.getByRole("button", { name: "Borradores" }));
-		const list = screen.getByRole("list", { name: "Proyectos" });
+		const list = screen.getByRole("table", { name: "Proyectos" });
 		expect(within(list).getByText("Beta")).toBeInTheDocument();
 		expect(within(list).queryByText("Alfa")).toBeNull();
 		expect(screen.queryByRole("button", { name: /Subir|Bajar/ })).toBeNull();
 		expect(screen.getByText(/quita los filtros/)).toBeInTheDocument();
+	});
+
+	it("en Borradores sin borradores los filtros siguen ahi para volver a Todos", async () => {
+		const published = [project({ title_default: "Alfa" })];
+		render(<ProjectsApp initial={published} siteUrl="https://s.dev" />);
+		await userEvent.click(screen.getByRole("button", { name: "Borradores" }));
+		expect(screen.getByText("Nada coincide")).toBeInTheDocument();
+		// Los filtros no desaparecen: se puede volver.
+		await userEvent.click(screen.getByRole("button", { name: "Todos" }));
+		expect(screen.getByRole("link", { name: "Alfa" })).toBeInTheDocument();
+	});
+
+	it("los filtros quedan en la URL y se pueden abrir desde ella", async () => {
+		render(<ProjectsApp initial={two} siteUrl="https://s.dev" />);
+		await userEvent.click(screen.getByRole("button", { name: "Borradores" }));
+		expect(window.location.search).toBe("?estado=draft");
+		await userEvent.click(screen.getByRole("button", { name: "Todos" }));
+		expect(window.location.search).toBe("");
+	});
+
+	it("abre ya filtrado si la URL trae estado y categoria", () => {
+		window.history.replaceState(null, "", "/?estado=draft&categoria=backend");
+		render(
+			<ProjectsApp
+				initial={[
+					project({ title_default: "Alfa" }),
+					project({
+						project_id: 2,
+						title_default: "Beta",
+						status: "draft",
+						category: "backend",
+					}),
+				]}
+				siteUrl="https://s.dev"
+			/>,
+		);
+		const table = screen.getByRole("table", { name: "Proyectos" });
+		expect(within(table).getByText("Beta")).toBeInTheDocument();
+		expect(within(table).queryByText("Alfa")).toBeNull();
+	});
+
+	it("un valor raro en la URL no rompe el filtro", () => {
+		window.history.replaceState(null, "", "/?estado=hack&categoria=__proto__");
+		render(<ProjectsApp initial={two} siteUrl="https://s.dev" />);
+		const table = screen.getByRole("table", { name: "Proyectos" });
+		expect(within(table).getByText("Alfa")).toBeInTheDocument();
+		expect(within(table).getByText("Beta")).toBeInTheDocument();
+	});
+
+	it("el modal de borrar vive en la URL: abre, sobrevive a una recarga y Atras lo cierra", async () => {
+		render(<ProjectsApp initial={two} siteUrl="https://s.dev" />);
+		await userEvent.click(screen.getByRole("button", { name: "Borrar Beta" }));
+		expect(window.location.search).toBe("?borrar=2");
+		expect(await screen.findByRole("alertdialog")).toBeInTheDocument();
+		await userEvent.click(screen.getByRole("button", { name: "Cancelar" }));
+		expect(window.location.search).toBe("");
+		expect(screen.queryByRole("alertdialog")).toBeNull();
+	});
+
+	it("abre el modal directo desde una URL con ?borrar=<id>", async () => {
+		window.history.replaceState(null, "", "/?borrar=2");
+		render(<ProjectsApp initial={two} siteUrl="https://s.dev" />);
+		expect(await screen.findByRole("alertdialog")).toHaveTextContent("Beta");
+	});
+
+	it("un ?borrar= de un proyecto que ya no existe no abre nada", () => {
+		window.history.replaceState(null, "", "/?borrar=999");
+		render(<ProjectsApp initial={two} siteUrl="https://s.dev" />);
+		expect(screen.queryByRole("alertdialog")).toBeNull();
 	});
 
 	it("reordena con botones y guarda de una vez", async () => {

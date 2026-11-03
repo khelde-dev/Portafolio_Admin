@@ -12,10 +12,10 @@ import {
 } from "@/components/form/fields";
 import { ResourceForm } from "@/components/form/ResourceForm";
 import { TranslationsTabs } from "@/components/form/TranslationsTabs";
-import { IndexList } from "@/components/IndexList";
 import { StatusBadge } from "@/components/StatusBadge";
 import { ApiFailure } from "@/lib/apiClient";
 import { translationsField } from "@/schemas/common";
+import { choose } from "../helpers/select";
 
 vi.mock("react-hot-toast", () => ({ default: { success: vi.fn() } }));
 
@@ -100,7 +100,7 @@ describe("ResourceForm", () => {
 			screen.getByLabelText(/^Título/, { selector: "input#campo-title" }),
 			"  Hola ",
 		);
-		await userEvent.selectOptions(screen.getByLabelText("Categoría"), "a");
+		await choose("Categoría", "Alfa");
 		await userEvent.click(screen.getByRole("tab", { name: /Inglés/ }));
 		await userEvent.type(
 			screen.getByLabelText("Título", {
@@ -135,7 +135,7 @@ describe("ResourceForm", () => {
 			screen.getByLabelText(/^Título/, { selector: "input#campo-title" }),
 			"Hola",
 		);
-		await userEvent.selectOptions(screen.getByLabelText("Categoría"), "a");
+		await choose("Categoría", "Alfa");
 		await userEvent.click(screen.getByRole("tab", { name: /Inglés/ }));
 		await userEvent.type(
 			screen.getByLabelText("Título", {
@@ -162,7 +162,7 @@ describe("ResourceForm", () => {
 			screen.getByLabelText(/^Título/, { selector: "input#campo-title" }),
 			"Hola",
 		);
-		await userEvent.selectOptions(screen.getByLabelText("Categoría"), "a");
+		await choose("Categoría", "Alfa");
 		await userEvent.click(
 			screen.getByRole("button", { name: "Guardar cambios" }),
 		);
@@ -195,7 +195,7 @@ describe("ResourceForm", () => {
 			screen.getByLabelText(/^Título/, { selector: "input#campo-title" }),
 			"Hola",
 		);
-		await userEvent.selectOptions(screen.getByLabelText("Categoría"), "a");
+		await choose("Categoría", "Alfa");
 		await userEvent.keyboard("{Control>}s{/Control}");
 		await waitFor(() => expect(onSubmit).toHaveBeenCalledOnce());
 	});
@@ -235,53 +235,6 @@ describe("TranslationsTabs", () => {
 		);
 		await userEvent.click(screen.getByRole("tab", { name: /Francés/ }));
 		expect(await screen.findByText("Mi obra")).toBeInTheDocument();
-	});
-});
-
-describe("IndexList", () => {
-	const rows = [
-		{ id: 1, name: "Alfa" },
-		{ id: 2, name: "Beta" },
-	];
-	const list = (items = rows) => (
-		<IndexList
-			rows={items}
-			getId={(r) => r.id}
-			label="Elementos"
-			searchText={(r) => r.name}
-			empty={<p>Todavía no hay nada</p>}
-			renderRow={(r) => <span>{r.name}</span>}
-		/>
-	);
-
-	it("lista con nombre accesible y cuenta", () => {
-		render(list());
-		expect(screen.getByRole("list", { name: "Elementos" })).toBeInTheDocument();
-		expect(screen.getByText("2 elementos")).toBeInTheDocument();
-	});
-
-	it("la busqueda filtra y dice cuantos de cuantos", async () => {
-		render(list());
-		await userEvent.type(
-			screen.getByRole("searchbox", { name: "Buscar" }),
-			"bet",
-		);
-		expect(screen.getByText("1 de 2")).toBeInTheDocument();
-		expect(screen.queryByText("Alfa")).toBeNull();
-		await userEvent.clear(screen.getByRole("searchbox", { name: "Buscar" }));
-		await userEvent.type(
-			screen.getByRole("searchbox", { name: "Buscar" }),
-			"zzz",
-		);
-		expect(
-			screen.getByText("Nada coincide con la búsqueda"),
-		).toBeInTheDocument();
-	});
-
-	it("sin filas muestra el vacio, no la lista", () => {
-		render(list([]));
-		expect(screen.getByText("Todavía no hay nada")).toBeInTheDocument();
-		expect(screen.queryByRole("list")).toBeNull();
 	});
 });
 
