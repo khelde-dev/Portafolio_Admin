@@ -1,0 +1,27 @@
+---
+import { PUBLIC_PORTFOLIO_URL } from "astro:env/client";
+import PageHeader from "@/components/PageHeader.astro";
+import { ProjectsApp } from "@/components/projects/ProjectsApp";
+import { buttonVariants } from "@/components/ui/button";
+import AdminLayout from "@/layouts/AdminLayout.astro";
+import { cn } from "@/lib/utils";
+import type { ProjectRow } from "@/schemas/projects";
+import { loadList } from "@/server/data";
+
+const { data, error } = await loadList<ProjectRow[]>(
+	Astro.request,
+	"/projects/admin",
+);
+const drafts = data?.filter((p) => p.status === "draft").length ?? 0;
+---
+
+<AdminLayout title="Proyectos" activeId="proyectos" crumbs={[{ label: "Proyectos" }]}>
+	<PageHeader
+		title="Proyectos"
+		description="Lo que se ve en el portafolio. Un borrador no aparece hasta que lo publicas."
+		meta={data ? `${data.length} proyectos, ${drafts} en borrador` : undefined}
+	>
+		<a href="/proyectos/nuevo" class={cn(buttonVariants(), "min-h-11 px-4")}>Nuevo proyecto</a>
+	</PageHeader>
+	<ProjectsApp client:load initial={data} initialError={error} siteUrl={PUBLIC_PORTFOLIO_URL} />
+</AdminLayout>

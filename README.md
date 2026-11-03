@@ -56,6 +56,7 @@ se documentan en [`.env.example`](./.env.example).
 | `API_SECRET_TOKEN` | servidor | **sí** | bearer hacia el backend |
 | `ACCESS_TEAM_DOMAIN`, `ACCESS_AUD` | servidor | no | verificar el JWT de Access |
 | `PUBLIC_MEDIA_URL` | cliente (build) | no | origen público de R2 |
+| `PUBLIC_ICONS_URL` | cliente (build) | no | servicio de iconos de tecnologías |
 | `PUBLIC_PORTFOLIO_URL` | cliente (build) | no | enlaces al portafolio público |
 
 ## Despliegue
