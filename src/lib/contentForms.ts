@@ -11,6 +11,7 @@ import {
 	SKILL_TEXT_FIELDS,
 	type SkillRow,
 } from "@/schemas/content";
+import { SITE_COPY_FIELDS, type SiteCopyRow } from "@/schemas/siteCopy";
 
 /**
  * Valores iniciales de los formularios de contenido. Los campos de texto nunca son
@@ -164,4 +165,31 @@ export const contactValues = (
 	linkedin_name: row?.linkedin_name ?? "",
 	phone: row?.phone ?? "",
 	email: row?.email ?? "",
+});
+
+export interface SiteCopyValues extends WithVersion {
+	hero_image: string;
+	hero_image_alt_default: string;
+	hero_label_default: string;
+	hero_lead_default: string;
+	manifesto_text_default: string;
+	meta_description_default: string;
+	translations: TranslationMap;
+}
+
+/** Los textos del sitio son una sola ficha y puede no existir: entonces el formulario arranca vacio. */
+export const siteCopyValues = (
+	row: SiteCopyRow | null | undefined,
+): SiteCopyValues => ({
+	...(row ? { updated_at: row.updated_at } : {}),
+	hero_image: row?.hero_image ?? "",
+	hero_image_alt_default: row?.hero_image_alt_default ?? "",
+	hero_label_default: row?.hero_label_default ?? "",
+	hero_lead_default: row?.hero_lead_default ?? "",
+	manifesto_text_default: row?.manifesto_text_default ?? "",
+	meta_description_default: row?.meta_description_default ?? "",
+	translations: normalizeTranslations(
+		row?.translations,
+		Object.keys(SITE_COPY_FIELDS),
+	),
 });

@@ -3,12 +3,18 @@ import { useCallback, useState } from "react";
 import { ConfirmDelete } from "@/components/ConfirmDelete";
 import { type Column, DataTable } from "@/components/DataTable";
 import { MediaImage } from "@/components/media/MediaImage";
-import { MoveButtons, OrderBar } from "@/components/OrderControls";
+import {
+	OrderBar,
+	OrderIntro,
+	OrderModeButton,
+} from "@/components/OrderControls";
+import { SortableList } from "@/components/SortableList";
 import { EmptyState, ErrorState } from "@/components/states";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { useDeleteTarget } from "@/hooks/useDeleteTarget";
 import { useReorder } from "@/hooks/useReorder";
+import { useUrlParam } from "@/hooks/useUrlParams";
 import { ApiFailure, api } from "@/lib/apiClient";
 import { cn } from "@/lib/utils";
 
@@ -59,6 +65,10 @@ export function ContentList<T>({
 }: Props<T>) {
 	const order = useReorder<T>(initial ?? [], getId, resource);
 	const { rows, replace } = order;
+	// El modo ordenar vive en la URL (?orden=1).
+	const [orderingRaw, setOrdering] = useUrlParam("orden", "");
+	const ordering = orderingRaw === "1";
+	const toggleOrdering = () => setOrdering(ordering ? "" : "1", { push: true });
 	const [loadError, setLoadError] = useState<string | null>(initialError);
 	const [notice, setNotice] = useState<string | null>(null);
 	const [busy, setBusy] = useState(false);
@@ -158,16 +168,9 @@ export function ContentList<T>({
 			hideHeader: true,
 			className: "md:w-px md:whitespace-nowrap max-md:w-full",
 			cell: (row) => {
-				const index = rows.findIndex((r) => getId(r) === getId(row));
 				const title = getTitle(row);
 				return (
 					<div className="flex items-center gap-0.5">
-						<MoveButtons
-							name={title}
-							index={index}
-							count={rows.length}
-							onMove={(delta) => order.move(index, delta)}
-						/>
 						<a
 							href={editHref(row)}
 							className={cn(
@@ -210,15 +213,53 @@ export function ContentList<T>({
 				onDiscard={order.discard}
 			/>
 
-			<DataTable
-				rows={rows}
-				getId={getId}
-				label={label}
-				searchLabel={`Buscar ${noun}`}
-				searchText={searchText}
-				empty={null}
-				columns={columns}
-			/>
+			{ordering ? (
+				<>
+					<OrderIntro
+						count={rows.length}
+						noun={label.toLowerCase()}
+						active
+						onToggle={toggleOrdering}
+					/>
+					<SortableList
+						rows={rows}
+						getId={getId}
+						getTitle={getTitle}
+						describe={describe}
+						thumb={
+							thumb
+								? (row) => {
+										const image = thumb(row);
+										return image ? (
+											<MediaImage
+												mediaKey={image}
+												loading="lazy"
+												className="size-12 shrink-0 rounded-lg border border-border bg-muted object-contain"
+											/>
+										) : null;
+									}
+								: undefined
+						}
+						onMoveTo={order.moveTo}
+						label={`Orden de ${label.toLowerCase()}`}
+					/>
+				</>
+			) : (
+				<DataTable
+					rows={rows}
+					getId={getId}
+					label={label}
+					searchLabel={`Buscar ${noun}`}
+					searchText={searchText}
+					filters={
+						rows.length > 1 ? (
+							<OrderModeButton active={false} onToggle={toggleOrdering} />
+						) : undefined
+					}
+					empty={null}
+					columns={columns}
+				/>
+			)}
 
 			<ConfirmDelete
 				open={deleting !== null}

@@ -37,7 +37,11 @@ const checks = [
 	{
 		label: "Lista de correos permitidos (ADMIN_EMAILS)",
 		ok: Boolean(ADMIN_EMAILS),
-		hint: "Sin la lista solo manda la política de Access. Cárgala como secreto.",
+		// En `pnpm dev` no hay Access: entra el usuario de prueba y la lista no se usa.
+		skip: import.meta.env.DEV,
+		hint: import.meta.env.DEV
+			? "En local no hay Cloudflare Access: se entra con el usuario de prueba y esta lista no se usa. Se comprueba en producción."
+			: "Sin la lista solo manda la política de Access. Cárgala como secreto.",
 	},
 	{
 		label: "El backend responde",
@@ -101,12 +105,14 @@ const checks = [
 					<TableRow>
 						<TableCell className="whitespace-normal">
 							<p>{check.label}</p>
-							{!check.ok ? (
+							{!check.ok || check.skip ? (
 								<p class="mt-1 text-sm text-muted-foreground">{check.hint}</p>
 							) : null}
 						</TableCell>
 						<TableCell className="align-top">
-							{check.ok ? (
+							{check.skip ? (
+								<Badge variant="outline">No aplica</Badge>
+							) : check.ok ? (
 								<Badge variant="secondary">Correcto</Badge>
 							) : (
 								<Badge variant="destructive">Revisar</Badge>

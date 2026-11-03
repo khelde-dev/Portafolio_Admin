@@ -40,6 +40,12 @@ export const UPLOAD_USES = {
 		maxSide: 1200,
 		maxBytes: 400 * 1024,
 	},
+	site: {
+		folder: "site",
+		label: "Foto del hero",
+		maxSide: 1600,
+		maxBytes: 400 * 1024,
+	},
 } as const;
 export type UploadUse = keyof typeof UPLOAD_USES;
 
