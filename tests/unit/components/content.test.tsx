@@ -94,7 +94,10 @@ const about = (over: Partial<AboutRow> = {}): AboutRow => ({
 	...over,
 });
 
-beforeEach(() => vi.clearAllMocks());
+beforeEach(() => {
+	vi.clearAllMocks();
+	window.history.replaceState(null, "", "/");
+});
 afterEach(() => vi.restoreAllMocks());
 
 describe("valores de los formularios", () => {
@@ -182,6 +185,7 @@ describe("listas ordenables", () => {
 				initial={[skill(), skill({ skill_id: 10, title_default: "Datos" })]}
 			/>,
 		);
+		await userEvent.click(screen.getByRole("button", { name: "Ordenar" }));
 		await userEvent.click(
 			screen.getByRole("button", { name: "Bajar Frontend" }),
 		);
