@@ -1,4 +1,4 @@
-import { ArrowDown, ArrowUp } from "lucide-react";
+import { ArrowDown, ArrowUp, ArrowUpDown, Check } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -39,6 +39,49 @@ export const MoveButtons = ({
 			<ArrowDown aria-hidden="true" />
 		</Button>
 	</span>
+);
+
+/**
+ * Entra y sale del modo ordenar (el valor vive en la URL: `?orden=1`). En ese modo
+ * la lista muestra todos los elementos juntos, sin paginar ni filtrar, para poder
+ * llevar uno de cualquier lugar a cualquier otro.
+ */
+export const OrderModeButton = ({
+	active,
+	onToggle,
+}: {
+	active: boolean;
+	onToggle: () => void;
+}) => (
+	<Button
+		type="button"
+		variant="outline"
+		className="min-h-11 px-3"
+		onClick={onToggle}
+	>
+		{active ? <Check aria-hidden="true" /> : <ArrowUpDown aria-hidden="true" />}
+		{active ? "Terminar de ordenar" : "Ordenar"}
+	</Button>
+);
+
+/** Cabecera del modo ordenar: que hacer y como salir. */
+export const OrderIntro = ({
+	count,
+	noun,
+	active,
+	onToggle,
+}: {
+	count: number;
+	noun: string;
+	active: boolean;
+	onToggle: () => void;
+}) => (
+	<div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+		<p className="max-w-[60ch] text-muted-foreground">
+			{`Ordenando ${count} ${noun}. Arrastra el asa de cada uno, o usa Subir y Bajar. Con teclado: Espacio para tomarlo, flechas para moverlo y Espacio para soltarlo.`}
+		</p>
+		<OrderModeButton active={active} onToggle={onToggle} />
+	</div>
 );
 
 /** Barra "Guardar orden / Descartar" que aparece solo cuando el orden cambio. */
