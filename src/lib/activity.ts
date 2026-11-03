@@ -47,6 +47,7 @@ const RESOURCES: Record<string, ResourceInfo> = {
 	},
 	about: { label: "sobre mí", list: "/sobre-mi" },
 	"contact-info": { label: "datos de contacto", list: "/contacto" },
+	"site-copy": { label: "textos del sitio", list: "/textos" },
 	comments: { label: "comentario", list: "/comentarios" },
 	"contact-messages": { label: "mensaje", list: "/mensajes" },
 	media: { label: "imagen", list: "/medios" },

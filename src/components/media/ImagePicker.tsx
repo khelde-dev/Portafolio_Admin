@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useResource } from "@/hooks/useResource";
-import { useUrlParam } from "@/hooks/useUrlParams";
+import { setUrlParams, useUrlParam } from "@/hooks/useUrlParams";
 import type { UploadUse } from "@/lib/webp";
 
 interface DialogProps {
@@ -33,10 +33,14 @@ interface DialogProps {
  * recargar abierto y Atras lo cierra. Solo uno a la vez.
  */
 const usePickerOpen = (name: string) => {
-	const [current, setCurrent] = useUrlParam("elegir");
+	const [current] = useUrlParam("elegir");
 	return [
 		current === name,
-		(open: boolean) => setCurrent(open ? name : "", { push: open }),
+		// Al cerrar tambien se quita la pestana (?origen): no queda nada suelto en la URL.
+		(open: boolean) =>
+			setUrlParams(open ? { elegir: name } : { elegir: null, origen: null }, {
+				push: open,
+			}),
 	] as const;
 };
 

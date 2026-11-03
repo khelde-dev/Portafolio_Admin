@@ -153,7 +153,8 @@ describe("selector de imagen: el dialogo y su pestana en la URL", () => {
 		);
 		expect(search()).toBe("?elegir=img&origen=library");
 		await userEvent.keyboard("{Escape}");
-		expect(search()).not.toContain("elegir");
+		// Cerrar quita el dialogo y tambien su pestana: la URL queda limpia.
+		expect(search()).toBe("");
 	});
 
 	it("abre directo desde la URL", async () => {

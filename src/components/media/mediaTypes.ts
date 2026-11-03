@@ -24,6 +24,8 @@ export const usageHref = (usage: ImageUsage): string | null => {
 			return `/educacion/${usage.id}`;
 		case "about":
 			return "/sobre-mi";
+		case "site-copy":
+			return "/textos";
 		default:
 			return null;
 	}
@@ -34,6 +36,7 @@ export const FIELD_LABELS: Record<string, string> = {
 	gallery: "galería",
 	img: "logo",
 	image: "imagen",
+	hero_image: "foto del hero",
 };
 
 /** `projects/6f1c…e2.webp` -> `…e2.webp` para que quepa en una tarjeta. */

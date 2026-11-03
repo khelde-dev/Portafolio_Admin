@@ -12,6 +12,7 @@ import {
 	messageStatusSchema,
 } from "@/schemas/inbox";
 import { projectSchema } from "@/schemas/projects";
+import { siteCopySchema } from "@/schemas/siteCopy";
 
 /**
  * LISTA BLANCA de lo que el navegador puede pedirle al admin y de como se
@@ -83,6 +84,13 @@ export const RESOURCES: Record<string, ResourceConfig> = {
 		listPath: "/about/admin",
 		basePath: "/about",
 		schema: aboutSchema,
+		update: true,
+		singleton: true,
+	},
+	"site-copy": {
+		listPath: "/site-copy/admin",
+		basePath: "/site-copy",
+		schema: siteCopySchema,
 		update: true,
 		singleton: true,
 	},
