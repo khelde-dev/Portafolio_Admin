@@ -50,6 +50,19 @@ describe("callBackend", () => {
 		expect(init.method).toBe("GET");
 	});
 
+	it("llama al fetch global sin `this` (workerd falla con Illegal invocation)", async () => {
+		const thisSeen: unknown[] = [];
+		vi.stubGlobal("fetch", function (this: unknown) {
+			thisSeen.push(this);
+			if (this !== undefined && this !== globalThis) {
+				throw new TypeError("Illegal invocation");
+			}
+			return Promise.resolve(Response.json({}));
+		});
+		await expect(callBackend("/projects")).resolves.toEqual({});
+		expect(thisSeen).toHaveLength(1);
+	});
+
 	it("no manda el JWT si no hay uno", async () => {
 		const fetchMock = stubFetch(Response.json({}));
 		await callBackend("/projects");

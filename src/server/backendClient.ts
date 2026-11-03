@@ -217,7 +217,11 @@ export const callBackend = async <T = unknown>(
 		headers["Content-Type"] = contentType ?? "application/json";
 
 	const isJson = contentType === undefined;
-	const transport = (await serviceBinding()) ?? { fetch };
+	// El `fetch` global no se guarda como metodo de un objeto: workerd lo llamaria
+	// con `this` = ese objeto y fallaria con "Illegal invocation".
+	const transport = (await serviceBinding()) ?? {
+		fetch: (input: string, init?: RequestInit) => fetch(input, init),
+	};
 	const response = await transport.fetch(buildBackendUrl(path), {
 		method,
 		headers,

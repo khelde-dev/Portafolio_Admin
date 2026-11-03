@@ -49,7 +49,10 @@ const project = (over: Partial<ProjectRow> = {}): ProjectRow => ({
 	...over,
 });
 
-beforeEach(() => vi.clearAllMocks());
+beforeEach(() => {
+	vi.clearAllMocks();
+	window.history.replaceState(null, "", "/");
+});
 afterEach(() => vi.restoreAllMocks());
 
 describe("useReorder", () => {
@@ -233,14 +236,13 @@ describe("ProjectsApp", () => {
 		).toBeNull();
 	});
 
-	it("filtra por estado y por categoria, y entonces no se puede reordenar", async () => {
+	it("filtra por estado y por categoria; en la tabla ya no hay botones de orden", async () => {
 		render(<ProjectsApp initial={two} siteUrl="https://s.dev" />);
 		await userEvent.click(screen.getByRole("button", { name: "Borradores" }));
 		const list = screen.getByRole("table", { name: "Proyectos" });
 		expect(within(list).getByText("Beta")).toBeInTheDocument();
 		expect(within(list).queryByText("Alfa")).toBeNull();
 		expect(screen.queryByRole("button", { name: /Subir|Bajar/ })).toBeNull();
-		expect(screen.getByText(/quita los filtros/)).toBeInTheDocument();
 	});
 
 	it("en Borradores sin borradores los filtros siguen ahi para volver a Todos", async () => {
@@ -312,9 +314,32 @@ describe("ProjectsApp", () => {
 		expect(screen.queryByRole("alertdialog")).toBeNull();
 	});
 
+	it("?orden=1 abre el modo ordenar con todos los proyectos, aunque haya filtros", () => {
+		window.history.replaceState(null, "", "/?orden=1&estado=draft");
+		render(<ProjectsApp initial={two} siteUrl="https://s.dev" />);
+		const list = screen.getByRole("list", { name: "Orden de proyectos" });
+		expect(within(list).getByText("Alfa")).toBeInTheDocument();
+		expect(within(list).getByText("Beta")).toBeInTheDocument();
+		expect(screen.queryByRole("table")).toBeNull();
+		expect(screen.getByText(/Ordenando 2 proyectos/)).toBeInTheDocument();
+	});
+
+	it("Terminar de ordenar vuelve a la tabla", async () => {
+		window.history.replaceState(null, "", "/?orden=1");
+		render(<ProjectsApp initial={two} siteUrl="https://s.dev" />);
+		await userEvent.click(
+			screen.getByRole("button", { name: "Terminar de ordenar" }),
+		);
+		expect(
+			screen.getByRole("table", { name: "Proyectos" }),
+		).toBeInTheDocument();
+		expect(window.location.search).toBe("");
+	});
+
 	it("reordena con botones y guarda de una vez", async () => {
 		const put = vi.spyOn(api, "put").mockResolvedValue(null);
 		render(<ProjectsApp initial={two} siteUrl="https://s.dev" />);
+		await userEvent.click(screen.getByRole("button", { name: "Ordenar" }));
 		await userEvent.click(screen.getByRole("button", { name: "Bajar Alfa" }));
 		await userEvent.click(
 			await screen.findByRole("button", { name: "Guardar orden" }),

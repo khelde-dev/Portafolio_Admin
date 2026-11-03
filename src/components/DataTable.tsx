@@ -35,6 +35,8 @@ interface Props<T> {
 	filters?: ReactNode;
 	/** Nombre accesible de la tabla. */
 	label: string;
+	/** `stacked`: busqueda y filtros uno bajo otro, a todo el ancho (listas en una columna angosta). */
+	toolbar?: "inline" | "stacked";
 	/** Se muestra cuando NO hay filas y tampoco hay filtros con los que quitarlas. */
 	empty: ReactNode;
 	className?: string;
@@ -57,9 +59,11 @@ export function DataTable<T>({
 	searchLabel = "Buscar",
 	filters,
 	label,
+	toolbar = "inline",
 	empty,
 	className,
 }: Props<T>) {
+	const stacked = toolbar === "stacked";
 	const [query, setQuery] = useUrlParam("buscar", "", { resetsPage: true });
 	const searchId = useId();
 
@@ -79,9 +83,16 @@ export function DataTable<T>({
 	return (
 		<div className={cn("flex flex-col gap-4", className)}>
 			{searchText || filters ? (
-				<div className="flex flex-wrap items-end justify-between gap-3">
+				<div
+					className={cn(
+						"gap-3",
+						stacked
+							? "flex flex-col"
+							: "flex flex-wrap items-end justify-between",
+					)}
+				>
 					{searchText ? (
-						<div className="relative w-full sm:max-w-xs">
+						<div className={cn("relative w-full", !stacked && "sm:max-w-xs")}>
 							<Label htmlFor={searchId} className="sr-only">
 								{searchLabel}
 							</Label>
@@ -118,7 +129,10 @@ export function DataTable<T>({
 				/>
 			) : (
 				<>
-					<Table aria-label={label}>
+					<Table
+						aria-label={label}
+						className={stacked ? "table-fixed" : undefined}
+					>
 						<TableHeader className="max-md:sr-only">
 							<TableRow>
 								{columns.map((column) => (
