@@ -6,7 +6,7 @@ import { ContactForm } from "@/components/contact/ContactForm";
 import { api } from "@/lib/apiClient";
 import type { ContactRow } from "@/schemas/contact";
 
-vi.mock("react-hot-toast", () => ({ default: { success: vi.fn() } }));
+vi.mock("@/components/Toaster", () => ({ toast: { success: vi.fn() } }));
 
 const row: ContactRow = {
 	contact_id: 1,

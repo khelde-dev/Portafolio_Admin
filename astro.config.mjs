@@ -1,7 +1,23 @@
+import { createHash } from "node:crypto";
 import cloudflare from "@astrojs/cloudflare";
 import react from "@astrojs/react";
 import tailwindcss from "@tailwindcss/vite";
 import { defineConfig, envField } from "astro/config";
+import { THEME_SCRIPT } from "./src/lib/inlineScripts.ts";
+
+// Origenes de imagenes que el CSP permite en `img-src`. Mismas variables y mismos
+// valores por defecto que `PUBLIC_MEDIA_URL` / `PUBLIC_ICONS_URL` del esquema de abajo.
+const MEDIA_ORIGIN = new URL(
+	process.env.PUBLIC_MEDIA_URL ??
+		"https://pub-a3fda08feb4f417fa5634c34e7959461.r2.dev",
+).origin;
+const ICONS_ORIGIN = new URL(
+	process.env.PUBLIC_ICONS_URL ?? "https://go-skill-icons.vercel.app/api/icons",
+).origin;
+
+// sha256 del <script is:inline> del Layout (Astro no hashea los `is:inline`).
+const hashOf = (source) =>
+	`sha256-${createHash("sha256").update(source).digest("base64")}`;
 
 // Todas las URLs del admin son variables (nunca texto fijo en componentes).
 // Cada una vive en UN solo lugar: aqui se declara, con valor por defecto cuando
@@ -19,6 +35,43 @@ export default defineConfig({
 	build: { inlineStylesheets: "always" },
 
 	devToolbar: { enabled: false },
+
+	// CSP con hashes: Astro calcula el hash de cada <script> y <style> que genera y lo
+	// pone en un <meta http-equiv="content-security-policy"> por pagina. Solo funciona
+	// en `build` + `preview`, no en `dev`. Las directivas que no pueden ir en un <meta>
+	// (frame-ancestors...) siguen en src/lib/securityHeaders.ts y public/_headers.
+	security: {
+		csp: {
+			directives: [
+				"default-src 'self'",
+				// R2 (imagenes), go-skill-icons (tecnologias) y blob: (vista previa de una
+				// imagen antes de subirla).
+				`img-src 'self' data: blob: ${MEDIA_ORIGIN} ${ICONS_ORIGIN}`,
+				"font-src 'self' data:",
+				// El navegador solo habla con el propio admin: el backend se alcanza desde
+				// el servidor (/api/* del Worker).
+				"connect-src 'self'",
+				"worker-src 'self' blob:",
+				"media-src 'self'",
+				"manifest-src 'self'",
+				"frame-src 'none'",
+				"base-uri 'self'",
+				"object-src 'none'",
+				"frame-ancestors 'none'",
+				"form-action 'self'",
+			],
+			scriptDirective: { hashes: [hashOf(THEME_SCRIPT)] },
+			// Los atributos style="" (Astro y React los ponen) no se pueden hashear; no
+			// ejecutan codigo, asi que solo ellos quedan en `unsafe-inline`. Las
+			// etiquetas <style> y <script> siguen exigiendo hash.
+			styleDirective: {
+				resources: [
+					"'self'",
+					{ resource: "'unsafe-inline'", kind: "attribute" },
+				],
+			},
+		},
+	},
 
 	// 4322, no 4321: el portafolio y el admin pueden correr a la vez.
 	server: { port: 4322 },

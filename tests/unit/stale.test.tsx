@@ -14,7 +14,7 @@ import { duplicateValues, rowToValues } from "@/lib/projectForm";
 import type { ContactRow } from "@/schemas/contact";
 import type { ProjectRow } from "@/schemas/projects";
 
-vi.mock("react-hot-toast", () => ({ default: { success: vi.fn() } }));
+vi.mock("@/components/Toaster", () => ({ toast: { success: vi.fn() } }));
 vi.mock("astro:env/client", () => ({
 	PUBLIC_MEDIA_URL: "https://media.example.dev",
 	PUBLIC_ICONS_URL: "https://icons.example.dev/api/icons",

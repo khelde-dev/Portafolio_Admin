@@ -7,9 +7,11 @@
  * para que no se separen.
  *
  * Mismas cabeceras que el portafolio mas `X-Robots-Tag`: el admin nunca debe
- * indexarse. El CSP es parcial a proposito (marcos, `<base>`, plugins,
- * formularios); un `script-src` / `style-src` real se activa despues de
- * verificarlo en un navegador.
+ * indexarse. El CSP de aqui es el MINIMO (marcos, `<base>`, plugins,
+ * formularios) y vale para lo que no es una pagina: la API y los archivos
+ * estaticos. Las paginas SSR llevan el CSP completo, con hashes, que genera
+ * Astro (`security.csp` en astro.config.mjs) y que ya incluye esas mismas
+ * cuatro directivas.
  */
 export const SECURITY_HEADERS = {
 	"Strict-Transport-Security": "max-age=31536000; includeSubDomains",
