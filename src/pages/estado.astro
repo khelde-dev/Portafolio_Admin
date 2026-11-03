@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/table";
 import AdminLayout from "@/layouts/AdminLayout.astro";
 import {
+	backendChannel,
 	getBackendHealth,
 	MIN_BACKEND_VERSION,
 	meetsVersion,
@@ -24,6 +25,7 @@ const [health, auth] = await Promise.all([
 	probeBackendAuth(Astro.request),
 ]);
 const versionOk = meetsVersion(health.version);
+const channel = await backendChannel();
 
 // Solo si estan puestos: nunca se muestran los valores.
 const checks = [
@@ -65,7 +67,7 @@ const checks = [
 		description="Primer lugar donde mirar cuando algo no carga."
 	/>
 
-	<dl class="mb-8 grid gap-px overflow-hidden rounded-lg border border-border bg-border sm:grid-cols-3">
+	<dl class="mb-8 grid gap-px overflow-hidden rounded-lg border border-border bg-border sm:grid-cols-4">
 		<div class="bg-card px-5 py-4">
 			<dt class="text-muted-foreground">Admin</dt>
 			<dd class="mt-1 font-serif-display text-heading">{pkg.version}</dd>
@@ -77,6 +79,12 @@ const checks = [
 		<div class="bg-card px-5 py-4">
 			<dt class="text-muted-foreground">Tiempo de respuesta</dt>
 			<dd class="mt-1 font-serif-display text-heading">{health.ms} ms</dd>
+		</div>
+		<div class="bg-card px-5 py-4">
+			<dt class="text-muted-foreground">Conexión</dt>
+			<dd class="mt-1 font-serif-display text-heading">
+				{channel === "binding" ? "Service Binding" : "URL pública"}
+			</dd>
 		</div>
 	</dl>
 

@@ -100,6 +100,40 @@ export interface BackendRequest {
 
 const TIMEOUT_MS = 10_000;
 
+/** Algo que se puede llamar como `fetch`: el global o el Service Binding. */
+type Fetcher = {
+	fetch: (input: string, init?: RequestInit) => Promise<Response>;
+};
+
+/** Como se llega al backend. */
+export type BackendChannel = "binding" | "url";
+
+/**
+ * El Service Binding `BACKEND` (wrangler.jsonc `services`): la peticion pasa de un
+ * Worker al otro dentro de Cloudflare, sin salir a internet. Solo existe en el Worker
+ * desplegado (en `pnpm dev` no hay Worker del backend al que unirse): ahi, y si el
+ * binding no esta configurado, se llama por la URL publica `BACKEND_URL`. El
+ * Authorization y el JWT de Access viajan igual por los dos caminos.
+ */
+export const serviceBinding = async (): Promise<Fetcher | null> => {
+	if (import.meta.env.DEV) return null;
+	try {
+		const { env } = await import("cloudflare:workers");
+		const candidate = (env as { BACKEND?: unknown }).BACKEND as
+			| Partial<Fetcher>
+			| undefined;
+		return typeof candidate?.fetch === "function"
+			? (candidate as Fetcher)
+			: null;
+	} catch {
+		return null;
+	}
+};
+
+/** Por donde se esta llamando al backend (lo muestra la pantalla Estado). */
+export const backendChannel = async (): Promise<BackendChannel> =>
+	(await serviceBinding()) ? "binding" : "url";
+
 /** `/projects/3` -> `<BACKEND_URL>/projects/3`. Rechaza rutas que escapen de la base. */
 export const buildBackendUrl = (path: string, base = BACKEND_URL): string => {
 	if (!path.startsWith("/") || path.startsWith("//")) {
@@ -183,7 +217,8 @@ export const callBackend = async <T = unknown>(
 		headers["Content-Type"] = contentType ?? "application/json";
 
 	const isJson = contentType === undefined;
-	const response = await fetch(buildBackendUrl(path), {
+	const transport = (await serviceBinding()) ?? { fetch };
+	const response = await transport.fetch(buildBackendUrl(path), {
 		method,
 		headers,
 		body:
