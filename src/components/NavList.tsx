@@ -1,4 +1,5 @@
 import {
+	AtSign,
 	Briefcase,
 	CircleUser,
 	FolderKanban,
@@ -25,6 +26,7 @@ const ICONS: Record<NavIcon, LucideIcon> = {
 	skills: Wrench,
 	about: UserRound,
 	media: Images,
+	contact: AtSign,
 	status: HeartPulse,
 	account: CircleUser,
 };
