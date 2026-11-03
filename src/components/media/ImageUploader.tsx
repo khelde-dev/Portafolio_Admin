@@ -1,6 +1,8 @@
 import { ImageUp, RotateCcw } from "lucide-react";
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useState } from "react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { ApiFailure, apiUpload, type UploadedImage } from "@/lib/apiClient";
 import {
 	ACCEPT_ATTRIBUTE,
@@ -37,7 +39,6 @@ export const ImageUploader = ({
 }: Props) => {
 	const spec = UPLOAD_USES[use];
 	const inputId = useId();
-	const input = useRef<HTMLInputElement>(null);
 	const [phase, setPhase] = useState<Phase>({ step: "idle" });
 	const [error, setError] = useState<string | null>(null);
 
@@ -54,7 +55,8 @@ export const ImageUploader = ({
 	const reset = () => {
 		setPhase({ step: "idle" });
 		setError(null);
-		if (input.current) input.current.value = "";
+		const field = document.getElementById(inputId) as HTMLInputElement | null;
+		if (field) field.value = "";
 	};
 
 	const choose = async (file: File | undefined) => {
@@ -100,22 +102,26 @@ export const ImageUploader = ({
 	return (
 		<div className="flex flex-col gap-4">
 			<div>
-				<input
-					ref={input}
+				<Input
 					id={inputId}
 					type="file"
 					accept={ACCEPT_ATTRIBUTE}
 					className="sr-only"
+					tabIndex={-1}
+					aria-label="Archivo de imagen"
 					onChange={(event) => void choose(event.target.files?.[0])}
 					disabled={phase.step === "converting" || phase.step === "uploading"}
 				/>
-				<label
-					htmlFor={inputId}
-					className="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-lg border border-border bg-background px-4 text-[0.9375rem] font-medium hover-press hover:bg-muted focus-within:outline-2 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-primary"
+				<Button
+					type="button"
+					variant="outline"
+					className="min-h-11 px-4"
+					disabled={phase.step === "converting" || phase.step === "uploading"}
+					onClick={() => document.getElementById(inputId)?.click()}
 				>
-					<ImageUp aria-hidden="true" className="size-4" />
+					<ImageUp aria-hidden="true" />
 					{phase.step === "converting" ? "Preparando…" : "Elegir imagen"}
-				</label>
+				</Button>
 				<p className="mt-2 text-sm text-muted-foreground">
 					{spec.label}: PNG, JPG, WebP o AVIF. Se convierte a WebP de hasta{" "}
 					{formatBytes(spec.maxBytes)} y {spec.maxSide} px.
@@ -123,12 +129,9 @@ export const ImageUploader = ({
 			</div>
 
 			{error ? (
-				<p
-					role="alert"
-					className="rounded-lg border border-destructive/40 bg-destructive/5 px-4 py-3 font-medium text-destructive"
-				>
-					{error}
-				</p>
+				<Alert variant="destructive">
+					<AlertDescription>{error}</AlertDescription>
+				</Alert>
 			) : null}
 
 			{phase.step === "ready" || phase.step === "uploading" ? (

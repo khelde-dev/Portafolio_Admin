@@ -28,6 +28,7 @@ export const ActivityFilter = ({ value, options }: Props) => {
 					const url = new URL(window.location.href);
 					if (next) url.searchParams.set("recurso", next);
 					else url.searchParams.delete("recurso");
+					url.searchParams.delete("pagina");
 					window.location.assign(url);
 				}}
 			/>

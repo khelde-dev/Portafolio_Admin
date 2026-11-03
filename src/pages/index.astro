@@ -1,6 +1,15 @@
 ---
 import { LocalTime } from "@/components/LocalTime";
 import PageHeader from "@/components/PageHeader.astro";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+	Table,
+	TableBody,
+	TableCell,
+	TableHead,
+	TableHeader,
+	TableRow,
+} from "@/components/ui/table";
 import AdminLayout from "@/layouts/AdminLayout.astro";
 import { describeEntry } from "@/lib/activity";
 import { NAV } from "@/lib/nav";
@@ -50,9 +59,9 @@ const sections = NAV.filter(
 		<h2 id="atencion" class="eyebrow mb-3">Para atender</h2>
 		{
 			error ? (
-				<p role="alert" class="rounded-lg border border-destructive/40 bg-destructive/5 px-4 py-3 font-medium text-destructive">
-					{error} <a class="underline underline-offset-4" href="/estado">Ver estado</a>
-				</p>
+				<Alert variant="destructive">
+<AlertDescription>{error} <a class="underline underline-offset-4" href="/estado">Ver estado</a></AlertDescription>
+</Alert>
 			) : (
 				<>
 					<ul class="border-t border-border">
@@ -100,24 +109,34 @@ const sections = NAV.filter(
 						Ver toda la actividad
 					</a>
 				</div>
-				<ol class="divide-y divide-border border-y border-border">
-					{recent.map(({ entry, line }) => (
-						<li class="flex flex-wrap items-baseline gap-x-4 gap-y-1 px-1 py-3">
-							<LocalTime client:load value={entry.at} className="eyebrow w-44 shrink-0" />
-							<p class="min-w-0 flex-1 break-words">
-								<span class="font-medium">{line.verb}</span>{" "}
-								{line.href ? (
-									<a href={line.href} class="underline decoration-border underline-offset-4 hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
-										{line.label}
-									</a>
-								) : (
-									line.label
-								)}
-								{line.summary ? <span class="text-muted-foreground">{` «${line.summary}»`}</span> : null}
-							</p>
-						</li>
-					))}
-				</ol>
+				<Table aria-label="Últimos cambios">
+					<TableHeader className="sr-only">
+						<TableRow>
+							<TableHead>Cuándo</TableHead>
+							<TableHead>Qué</TableHead>
+						</TableRow>
+					</TableHeader>
+					<TableBody>
+						{recent.map(({ entry, line }) => (
+							<TableRow className="max-md:flex max-md:flex-wrap max-md:gap-x-4">
+								<TableCell className="w-44 whitespace-normal">
+									<LocalTime client:load value={entry.at} className="eyebrow" />
+								</TableCell>
+								<TableCell className="whitespace-normal break-words">
+									<span class="font-medium">{line.verb}</span>{" "}
+									{line.href ? (
+										<a href={line.href} class="underline decoration-border underline-offset-4 hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+											{line.label}
+										</a>
+									) : (
+										line.label
+									)}
+									{line.summary ? <span class="text-muted-foreground">{` «${line.summary}»`}</span> : null}
+								</TableCell>
+							</TableRow>
+						))}
+					</TableBody>
+				</Table>
 			</section>
 		) : null
 	}
