@@ -32,6 +32,29 @@ pnpm dev                 # http://localhost:4322
 En desarrollo no hay Cloudflare Access: el admin usa un usuario falso que solo
 existe bajo `import.meta.env.DEV`.
 
+## Desarrollo con el backend local
+
+`pnpm dev` no tiene Cloudflare Access, pero las rutas del CMS del backend sí
+exigen su JWT: sin él responden **503** ("Access no está configurado") y las
+pantallas dicen "El backend rechazó la petición". Para trabajar contra
+`wrangler dev` (por ejemplo `BACKEND_URL=http://127.0.0.1:8787`), corre esto
+**en este repo** (el backend no tiene ese script):
+
+```bash
+pnpm dev:access
+```
+
+Imprime dos bloques de **llaves de prueba** (de usar y tirar, nada que ver con
+Cloudflare) y no escribe ningún archivo:
+
+1. `DEV_ACCESS_KEY` → al `.env` de este repo (llave privada: el admin firma con
+   ella un JWT de 1 hora, solo con `pnpm dev`).
+2. `ACCESS_AUD`, `ACCESS_TEAM_DOMAIN` y `ACCESS_JWKS` → al archivo de variables del
+   **backend** local (`.env` o `.dev.vars`, el que ya uses; wrangler lee uno u otro).
+
+Reinicia los dos servidores. `API_SECRET_TOKEN` (admin) y `API_TOKEN` (backend)
+deben valer lo mismo. La pantalla **Estado** dice qué falta.
+
 ## Comandos
 
 | Comando | Qué hace |
@@ -56,6 +79,7 @@ se documentan en [`.env.example`](./.env.example).
 | `API_SECRET_TOKEN` | servidor | **sí** | bearer hacia el backend |
 | `ACCESS_TEAM_DOMAIN`, `ACCESS_AUD` | servidor | no | verificar el JWT de Access |
 | `PUBLIC_MEDIA_URL` | cliente (build) | no | origen público de R2 |
+| `PUBLIC_ICONS_URL` | cliente (build) | no | servicio de iconos de tecnologías |
 | `PUBLIC_PORTFOLIO_URL` | cliente (build) | no | enlaces al portafolio público |
 
 ## Despliegue

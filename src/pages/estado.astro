@@ -1,0 +1,92 @@
+---
+import { ACCESS_AUD, ACCESS_TEAM_DOMAIN, ADMIN_EMAILS } from "astro:env/server";
+import PageHeader from "@/components/PageHeader.astro";
+import { Badge } from "@/components/ui/badge";
+import AdminLayout from "@/layouts/AdminLayout.astro";
+import {
+	getBackendHealth,
+	MIN_BACKEND_VERSION,
+	meetsVersion,
+	probeBackendAuth,
+} from "@/server/status";
+import pkg from "../../package.json";
+
+const [health, auth] = await Promise.all([
+	getBackendHealth(),
+	probeBackendAuth(Astro.request),
+]);
+const versionOk = meetsVersion(health.version);
+
+// Solo si estan puestos: nunca se muestran los valores.
+const checks = [
+	{
+		label: "Cloudflare Access configurado",
+		ok: Boolean(ACCESS_AUD && ACCESS_TEAM_DOMAIN),
+		hint: "Faltan ACCESS_AUD o ACCESS_TEAM_DOMAIN en wrangler.jsonc.",
+	},
+	{
+		label: "Lista de correos permitidos (ADMIN_EMAILS)",
+		ok: Boolean(ADMIN_EMAILS),
+		hint: "Sin la lista solo manda la política de Access. Cárgala como secreto.",
+	},
+	{
+		label: "El backend responde",
+		ok: health.ok,
+		hint: health.status
+			? `Respondió con el estado ${health.status}.`
+			: "No hubo respuesta. Revisa BACKEND_URL y que el Worker esté desplegado.",
+	},
+	{
+		label: "El backend acepta al admin (token y Access)",
+		ok: auth.ok,
+		hint: auth.hint,
+	},
+	{
+		label: `Versión del backend (mínima ${MIN_BACKEND_VERSION})`,
+		ok: versionOk,
+		hint: health.version
+			? `Tiene la ${health.version}: actualiza el backend antes de usar esta pantalla.`
+			: "No se pudo leer la versión.",
+	},
+];
+---
+
+<AdminLayout title="Estado" activeId="estado" crumbs={[{ label: "Estado" }]}>
+	<PageHeader
+		title="Estado"
+		description="Primer lugar donde mirar cuando algo no carga."
+	/>
+
+	<dl class="mb-8 grid gap-px overflow-hidden rounded-lg border border-border bg-border sm:grid-cols-3">
+		<div class="bg-card px-5 py-4">
+			<dt class="text-muted-foreground">Admin</dt>
+			<dd class="mt-1 font-serif-display text-heading">{pkg.version}</dd>
+		</div>
+		<div class="bg-card px-5 py-4">
+			<dt class="text-muted-foreground">Backend</dt>
+			<dd class="mt-1 font-serif-display text-heading">{health.version ?? "—"}</dd>
+		</div>
+		<div class="bg-card px-5 py-4">
+			<dt class="text-muted-foreground">Tiempo de respuesta</dt>
+			<dd class="mt-1 font-serif-display text-heading">{health.ms} ms</dd>
+		</div>
+	</dl>
+
+	<ul class="divide-y divide-border rounded-lg border border-border bg-card">
+		{
+			checks.map((check) => (
+				<li class="flex flex-wrap items-center gap-x-4 gap-y-1 px-5 py-4">
+					<span class="min-w-0 flex-1">{check.label}</span>
+					{check.ok ? (
+						<Badge variant="secondary">Correcto</Badge>
+					) : (
+						<Badge variant="destructive">Revisar</Badge>
+					)}
+					{!check.ok ? (
+						<p class="w-full text-sm text-muted-foreground">{check.hint}</p>
+					) : null}
+				</li>
+			))
+		}
+	</ul>
+</AdminLayout>

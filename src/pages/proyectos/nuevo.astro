@@ -1,0 +1,17 @@
+---
+import PageHeader from "@/components/PageHeader.astro";
+import { ProjectForm } from "@/components/projects/ProjectForm";
+import AdminLayout from "@/layouts/AdminLayout.astro";
+---
+
+<AdminLayout
+	title="Nuevo proyecto"
+	activeId="proyectos"
+	crumbs={[{ label: "Nuevo proyecto" }]}
+>
+	<PageHeader
+		title="Nuevo proyecto"
+		description="Nace como borrador: no se ve en el sitio hasta que lo publiques."
+	/>
+	<ProjectForm client:load />
+</AdminLayout>

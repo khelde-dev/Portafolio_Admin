@@ -1,0 +1,51 @@
+---
+import { LocalTime } from "@/components/LocalTime";
+import PageHeader from "@/components/PageHeader.astro";
+import { ThemeMenu } from "@/components/ThemeMenu";
+import { buttonVariants } from "@/components/ui/button";
+import AdminLayout from "@/layouts/AdminLayout.astro";
+import { fromEpoch } from "@/lib/format";
+import { cn } from "@/lib/utils";
+
+const user = Astro.locals.user;
+const expiresAt = fromEpoch(user.exp).toISOString();
+---
+
+<AdminLayout title="Cuenta" activeId="cuenta" crumbs={[{ label: "Cuenta" }]}>
+	<PageHeader
+		title="Cuenta"
+		description="Quién está dentro, cuándo vence la sesión y cómo se ve el panel."
+	/>
+
+	<dl class="divide-y divide-border rounded-lg border border-border bg-card">
+		<div class="grid gap-1 px-5 py-4 sm:grid-cols-[12rem_1fr] sm:gap-4">
+			<dt class="text-muted-foreground">Correo</dt>
+			<dd class="min-w-0 break-words font-medium">{user.email}</dd>
+		</div>
+		<div class="grid gap-1 px-5 py-4 sm:grid-cols-[12rem_1fr] sm:gap-4">
+			<dt class="text-muted-foreground">La sesión vence</dt>
+			<dd class="font-medium"><LocalTime client:load value={expiresAt} /></dd>
+		</div>
+		<div class="grid items-center gap-2 px-5 py-4 sm:grid-cols-[12rem_1fr] sm:gap-4">
+			<dt class="text-muted-foreground">Tema</dt>
+			<dd><ThemeMenu client:load /></dd>
+		</div>
+	</dl>
+
+	<section class="mt-10" aria-labelledby="salir">
+		<h2 id="salir" class="font-serif-display text-heading">Cerrar sesión</h2>
+		<p class="mt-2 max-w-[62ch] text-muted-foreground">
+			Cierra la sesión de Cloudflare Access en este navegador. La próxima vez
+			te pedirá el código por correo. Un token ya emitido sigue siendo válido
+			hasta que vence; si sospechas que alguien lo tiene, revoca la sesión
+			desde Zero Trust.
+		</p>
+		<!-- Enlace real: Access borra su cookie en /cdn-cgi/access/logout. -->
+		<a
+			href="/cdn-cgi/access/logout"
+			class={cn(buttonVariants({ variant: "outline" }), "mt-4 min-h-11 px-4")}
+		>
+			Cerrar sesión
+		</a>
+	</section>
+</AdminLayout>

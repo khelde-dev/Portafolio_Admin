@@ -57,6 +57,22 @@ export default defineConfig({
 				access: "public",
 				default: "",
 			}),
+			// SOLO desarrollo: llave PRIVADA de prueba (JWK en JSON) con la que el admin
+			// firma un JWT de Access falso para hablar con el backend local. La genera
+			// `pnpm dev:access`. En produccion no existe y no se lee.
+			DEV_ACCESS_KEY: envField.string({
+				context: "server",
+				access: "secret",
+				optional: true,
+			}),
+			// Secreto opcional: correos permitidos (separados por coma). Defensa en
+			// profundidad por si la politica de Access se relaja. Va como secreto y
+			// no en wrangler.jsonc porque el repositorio es publico.
+			ADMIN_EMAILS: envField.string({
+				context: "server",
+				access: "secret",
+				optional: true,
+			}),
 
 			// --- Cliente (se incrustan al compilar: son variables de BUILD). ----
 			// Origen publico del bucket R2 (imagenes). Ver src/lib/media.ts.
@@ -64,6 +80,13 @@ export default defineConfig({
 				context: "client",
 				access: "public",
 				default: "https://pub-a3fda08feb4f417fa5634c34e7959461.r2.dev",
+			}),
+			// Servicio que dibuja los iconos de las tecnologias (`?i=<nombre>`): el
+			// mismo que usa el portafolio. Cuando se autoalojen, solo cambia esto.
+			PUBLIC_ICONS_URL: envField.string({
+				context: "client",
+				access: "public",
+				default: "https://go-skill-icons.vercel.app/api/icons",
 			}),
 			// El portafolio publico (enlaces "ver sitio" / "ver proyecto").
 			PUBLIC_PORTFOLIO_URL: envField.string({
@@ -80,5 +103,9 @@ export default defineConfig({
 	output: "server",
 	// Vitest carga esta config con getViteConfig(); el plugin del adaptador
 	// levantaria un workerd por cada corrida de pruebas.
-	adapter: process.env.VITEST ? undefined : cloudflare(),
+	// `passthrough`: el admin no usa <Image>; sin esto el adaptador agrega un
+	// binding IMAGES (Cloudflare Images) que tiene cuota gratuita y luego cobro.
+	adapter: process.env.VITEST
+		? undefined
+		: cloudflare({ imageService: "passthrough" }),
 });

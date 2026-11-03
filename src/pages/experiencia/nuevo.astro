@@ -1,0 +1,10 @@
+---
+import { ExperienceForm } from "@/components/content/ExperienceForm";
+import PageHeader from "@/components/PageHeader.astro";
+import AdminLayout from "@/layouts/AdminLayout.astro";
+---
+
+<AdminLayout title="Nueva experiencia" activeId="experiencia" crumbs={[{ label: "Nueva experiencia" }]}>
+	<PageHeader title="Nueva experiencia" description="Un trabajo con su logo y sus textos en tres idiomas." />
+	<ExperienceForm client:load />
+</AdminLayout>

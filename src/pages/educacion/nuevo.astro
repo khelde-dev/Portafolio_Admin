@@ -1,0 +1,10 @@
+---
+import { EducationForm } from "@/components/content/EducationForm";
+import PageHeader from "@/components/PageHeader.astro";
+import AdminLayout from "@/layouts/AdminLayout.astro";
+---
+
+<AdminLayout title="Nuevo estudio" activeId="educacion" crumbs={[{ label: "Nuevo estudio" }]}>
+	<PageHeader title="Nuevo estudio" description="Una institución con su logo y sus textos en tres idiomas." />
+	<EducationForm client:load />
+</AdminLayout>

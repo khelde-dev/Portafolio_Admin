@@ -1,0 +1,23 @@
+---
+import { InboxApp } from "@/components/InboxApp";
+import PageHeader from "@/components/PageHeader.astro";
+import AdminLayout from "@/layouts/AdminLayout.astro";
+import type { MessageRow } from "@/schemas/inbox";
+import { loadList } from "@/server/data";
+
+// Se trae del servidor: la bandeja aparece ya pintada, sin esqueleto de carga.
+const { data, error } = await loadList<MessageRow[]>(
+	Astro.request,
+	"/contact-messages",
+);
+const unread = data?.filter((m) => m.status === "unread").length ?? 0;
+---
+
+<AdminLayout title="Mensajes" activeId="mensajes" crumbs={[{ label: "Mensajes" }]}>
+	<PageHeader
+		title="Mensajes"
+		description="Lo que te escriben desde el formulario del portafolio."
+		meta={data ? `${unread} sin leer de ${data.length}` : undefined}
+	/>
+	<InboxApp client:load initial={data} initialError={error} />
+</AdminLayout>

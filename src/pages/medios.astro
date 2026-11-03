@@ -1,0 +1,19 @@
+---
+import { MediaLibrary } from "@/components/media/MediaLibrary";
+import type { MediaListing } from "@/components/media/mediaTypes";
+import PageHeader from "@/components/PageHeader.astro";
+import AdminLayout from "@/layouts/AdminLayout.astro";
+import { loadList } from "@/server/data";
+
+const { data, error } = await loadList<MediaListing>(Astro.request, "/media");
+const unused = data?.objects.filter((o) => o.usedBy.length === 0).length ?? 0;
+---
+
+<AdminLayout title="Medios" activeId="medios" crumbs={[{ label: "Medios" }]}>
+	<PageHeader
+		title="Medios"
+		description="Las imágenes del portafolio. Se guardan siempre en WebP."
+		meta={data ? `${data.objects.length} imágenes, ${unused} sin uso` : undefined}
+	/>
+	<MediaLibrary client:load initial={data} initialError={error} />
+</AdminLayout>

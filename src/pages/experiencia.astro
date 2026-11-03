@@ -1,0 +1,25 @@
+---
+import { ExperienceList } from "@/components/content/ContentLists";
+import PageHeader from "@/components/PageHeader.astro";
+import { buttonVariants } from "@/components/ui/button";
+import AdminLayout from "@/layouts/AdminLayout.astro";
+import { cn } from "@/lib/utils";
+import type { ExperienceRow } from "@/schemas/content";
+import { loadList } from "@/server/data";
+
+const { data, error } = await loadList<ExperienceRow[]>(
+	Astro.request,
+	"/experiences/admin",
+);
+---
+
+<AdminLayout title="Experiencia" activeId="experiencia" crumbs={[{ label: "Experiencia" }]}>
+	<PageHeader
+		title="Experiencia"
+		description="Tus trabajos, del más reciente al más antiguo. El orden de la lista es el del sitio."
+		meta={data ? `${data.length} elementos` : undefined}
+	>
+		<a href="/experiencia/nuevo" class={cn(buttonVariants(), "min-h-11 px-4")}>Nueva experiencia</a>
+	</PageHeader>
+	<ExperienceList client:load initial={data} initialError={error} />
+</AdminLayout>
