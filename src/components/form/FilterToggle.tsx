@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { cn } from "@/lib/utils";
 
 interface Props<T extends string> {
 	/** Nombre accesible del grupo ("Estado"). */
@@ -7,6 +8,8 @@ interface Props<T extends string> {
 	value: T;
 	onValueChange: (value: T) => void;
 	options: readonly { value: T; label: ReactNode }[];
+	/** Ocupa todo el ancho y reparte las opciones por igual; si no caben, pasan a otra fila. */
+	fill?: boolean;
 }
 
 /**
@@ -18,6 +21,7 @@ export function FilterToggle<T extends string>({
 	value,
 	onValueChange,
 	options,
+	fill = false,
 }: Props<T>) {
 	return (
 		<ToggleGroup
@@ -28,12 +32,16 @@ export function FilterToggle<T extends string>({
 				if (chosen !== undefined) onValueChange(chosen);
 			}}
 			spacing={1}
+			className={fill ? "w-full flex-wrap" : undefined}
 		>
 			{options.map((option) => (
 				<ToggleGroupItem
 					key={option.value}
 					value={option.value}
-					className="min-h-11 px-3 text-[0.9375rem]"
+					className={cn(
+						"min-h-11 px-3 text-[0.9375rem]",
+						fill && "flex-auto justify-center",
+					)}
 				>
 					{option.label}
 				</ToggleGroupItem>

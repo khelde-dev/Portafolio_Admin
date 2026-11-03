@@ -160,7 +160,8 @@ export const InboxApp = ({ initial, initialError = null }: Props) => {
 		{
 			id: "message",
 			header: "Mensaje",
-			className: "min-w-0 max-md:w-full",
+			hideHeader: true,
+			className: "min-w-0 p-0 max-md:w-full",
 			cell: (row) => {
 				const active = row.message_id === selectedId;
 				return (
@@ -170,14 +171,14 @@ export const InboxApp = ({ initial, initialError = null }: Props) => {
 						onClick={() => open(row)}
 						aria-current={active ? "true" : undefined}
 						className={cn(
-							"h-auto min-h-16 w-full flex-col items-stretch gap-1 px-3 py-3 text-left whitespace-normal",
+							"h-auto min-h-20 w-full flex-col items-stretch gap-1.5 rounded-lg px-4 py-3 text-left whitespace-normal",
 							active && "bg-muted",
 						)}
 					>
-						<span className="flex items-baseline justify-between gap-3">
+						<span className="flex items-center justify-between gap-3">
 							<span
 								className={cn(
-									"truncate",
+									"min-w-0 truncate",
 									row.status === "unread" ? "font-semibold" : "font-medium",
 								)}
 							>
@@ -186,14 +187,14 @@ export const InboxApp = ({ initial, initialError = null }: Props) => {
 								) : null}{" "}
 								{row.name}
 							</span>
-							<LocalTime value={row.created_at} className="eyebrow shrink-0" />
+							<StatusBadge tone={TONE[row.status]} className="shrink-0">
+								{MESSAGE_STATUS_LABELS[row.status]}
+							</StatusBadge>
 						</span>
 						<span className="line-clamp-1 text-sm text-muted-foreground">
 							{snippet(row.more_information) || row.email}
 						</span>
-						<StatusBadge tone={TONE[row.status]} className="w-fit">
-							{MESSAGE_STATUS_LABELS[row.status]}
-						</StatusBadge>
+						<LocalTime value={row.created_at} className="eyebrow" />
 					</Button>
 				);
 			},
@@ -201,15 +202,19 @@ export const InboxApp = ({ initial, initialError = null }: Props) => {
 	];
 
 	return (
-		<div className="grid gap-6 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)]">
+		<div className="grid lg:grid-cols-[minmax(0,28rem)_minmax(0,1fr)]">
 			<section
 				aria-label="Lista de mensajes"
-				className={cn("min-w-0", selected ? "hidden lg:block" : "block")}
+				className={cn(
+					"min-w-0 lg:border-r lg:border-border lg:pr-8",
+					selected ? "hidden lg:block" : "block",
+				)}
 			>
 				<DataTable
 					rows={visible}
 					getId={(row) => row.message_id}
 					label="Mensajes"
+					toolbar="stacked"
 					searchLabel="Buscar mensaje"
 					searchText={(row) =>
 						`${row.name} ${row.email} ${row.more_information ?? ""}`
@@ -217,6 +222,7 @@ export const InboxApp = ({ initial, initialError = null }: Props) => {
 					filters={
 						<FilterToggle
 							label="Filtrar por estado"
+							fill
 							value={filter}
 							onValueChange={(value) => setFilter(value, { push: true })}
 							options={FILTERS.map(({ value, label }) => ({
@@ -237,7 +243,10 @@ export const InboxApp = ({ initial, initialError = null }: Props) => {
 
 			<section
 				aria-label="Mensaje"
-				className={cn("min-w-0", selected ? "block" : "hidden lg:block")}
+				className={cn(
+					"min-w-0 lg:sticky lg:top-24 lg:self-start lg:pl-8",
+					selected ? "block" : "hidden lg:block",
+				)}
 			>
 				{notice ? (
 					<Alert variant="destructive" className="mb-4">
@@ -360,7 +369,7 @@ export const InboxApp = ({ initial, initialError = null }: Props) => {
 							{selected.status !== "unread" ? (
 								<Button
 									type="button"
-									variant="ghost"
+									variant="outline"
 									className="min-h-11"
 									onClick={() => setStatus(selected, "unread")}
 								>
