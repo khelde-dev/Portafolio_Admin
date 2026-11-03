@@ -7,10 +7,14 @@ import {
 	getBackendHealth,
 	MIN_BACKEND_VERSION,
 	meetsVersion,
+	probeBackendAuth,
 } from "@/server/status";
 import pkg from "../../package.json";
 
-const health = await getBackendHealth();
+const [health, auth] = await Promise.all([
+	getBackendHealth(),
+	probeBackendAuth(Astro.request),
+]);
 const versionOk = meetsVersion(health.version);
 
 // Solo si estan puestos: nunca se muestran los valores.
@@ -31,6 +35,11 @@ const checks = [
 		hint: health.status
 			? `Respondió con el estado ${health.status}.`
 			: "No hubo respuesta. Revisa BACKEND_URL y que el Worker esté desplegado.",
+	},
+	{
+		label: "El backend acepta al admin (token y Access)",
+		ok: auth.ok,
+		hint: auth.hint,
 	},
 	{
 		label: `Versión del backend (mínima ${MIN_BACKEND_VERSION})`,

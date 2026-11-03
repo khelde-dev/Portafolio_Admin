@@ -1,4 +1,5 @@
 import { API_SECRET_TOKEN, BACKEND_URL } from "astro:env/server";
+import { devJwt } from "@/server/devAccess";
 
 /**
  * Unico cliente del Backend_Portafolio. Solo corre en el servidor (Worker):
@@ -25,11 +26,55 @@ export interface UsageRef {
 	field: string;
 }
 
+/**
+ * Por que el backend rechazo al admin. Sale de los mensajes FIJOS del backend
+ * (nunca se copia texto libre): distingue un token distinto (`bearer`) de un
+ * problema con el JWT de Access, que se arreglan en sitios distintos.
+ */
+export type FailReason =
+	| "bearer"
+	| "access-missing"
+	| "access-invalid"
+	| "access-unconfigured";
+
+const REASONS: Record<string, FailReason> = {
+	"Invalid token": "bearer",
+	"No Authorization header": "bearer",
+	"Invalid Authorization header": "bearer",
+	"Falta la sesion de Cloudflare Access": "access-missing",
+	"Sesion de Access invalida": "access-invalid",
+	"Cloudflare Access no esta configurado": "access-unconfigured",
+};
+
+export const classifyReason = (payload: unknown): FailReason | null => {
+	const message = (payload as { message?: unknown })?.message;
+	return typeof message === "string" && Object.hasOwn(REASONS, message)
+		? REASONS[message]
+		: null;
+};
+
+/** Que pasa y donde se arregla, segun el motivo que dio el backend. */
+export const rejectionMessage = (reason: FailReason | null): string => {
+	switch (reason) {
+		case "bearer":
+			return "El backend no aceptó el token. API_SECRET_TOKEN del admin debe valer lo mismo que API_TOKEN del backend.";
+		case "access-unconfigured":
+			return "El backend no tiene Cloudflare Access configurado (ACCESS_AUD y ACCESS_TEAM_DOMAIN). En local: corre pnpm dev:access en la carpeta del admin (Portafolio_admin), pega las líneas ACCESS_* que imprime en el .env del backend y reinicia el backend.";
+		case "access-missing":
+			return "El admin no mandó el JWT de Access. En local: corre pnpm dev:access en la carpeta del admin (Portafolio_admin), pega DEV_ACCESS_KEY en el .env del admin y reinicia el admin.";
+		case "access-invalid":
+			return "El backend no aceptó el JWT de Access (audiencia, emisor o llave distintos). En local: pega en el .env del backend las líneas ACCESS_* que imprime pnpm dev:access (se corre en Portafolio_admin) y reinicia ambos.";
+		default:
+			return "El backend rechazó la petición. Revisa la pantalla Estado.";
+	}
+};
+
 export class BackendError extends Error {
 	constructor(
 		readonly status: number,
 		readonly issues: FieldIssue[] = [],
 		readonly usedBy: UsageRef[] = [],
+		readonly reason: FailReason | null = null,
 	) {
 		super(`El backend respondio ${status}`);
 		this.name = "BackendError";
@@ -122,7 +167,10 @@ export const callBackend = async <T = unknown>(
 		Authorization: `Bearer ${API_SECRET_TOKEN}`,
 		Accept: "application/json",
 	};
-	if (accessJwt) headers["Cf-Access-Jwt-Assertion"] = accessJwt;
+	// En `pnpm dev` no hay Access: se firma un JWT de prueba (src/server/devAccess).
+	// `import.meta.env.DEV` es `false` en el build, asi que esto no existe en produccion.
+	const jwt = accessJwt ?? (import.meta.env.DEV ? await devJwt() : null);
+	if (jwt) headers["Cf-Access-Jwt-Assertion"] = jwt;
 	// El CSRF de Hono trata una escritura SIN Content-Type como text/plain y la
 	// bloquea: toda escritura lo lleva, incluso un DELETE sin cuerpo.
 	if (method !== "GET")
@@ -144,13 +192,14 @@ export const callBackend = async <T = unknown>(
 	});
 
 	if (!response.ok) {
-		const body = [400, 409].includes(response.status)
+		const body = [400, 401, 403, 409, 503].includes(response.status)
 			? await response.json().catch(() => null)
 			: null;
 		throw new BackendError(
 			response.status,
 			response.status === 400 ? sanitizeIssues(body) : [],
 			response.status === 409 ? sanitizeUsage(body) : [],
+			[401, 403, 503].includes(response.status) ? classifyReason(body) : null,
 		);
 	}
 	// Sin cuerpo (204) es valido.

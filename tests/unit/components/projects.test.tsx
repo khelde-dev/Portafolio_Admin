@@ -176,6 +176,14 @@ describe("TechPicker", () => {
 		expect(screen.queryByRole("button", { name: /Agregar otra/ })).toBeNull();
 	});
 
+	it("muestra el conjunto elegido como una sola imagen", () => {
+		render(<Host initial={["git", "docker"]} />);
+		expect(screen.getByAltText("Vista previa: git, docker")).toHaveAttribute(
+			"src",
+			"https://icons.example.dev/api/icons?i=git,docker",
+		);
+	});
+
 	it("el icono se pide al servicio con el nombre codificado", () => {
 		render(<Host initial={["react"]} />);
 		const imgs = Array.from(document.querySelectorAll("img"));

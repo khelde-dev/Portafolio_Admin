@@ -9,6 +9,7 @@ import {
 	KNOWN_TECHNOLOGIES,
 	suggestTechnologies,
 	techIconUrl,
+	techStackUrl,
 } from "@/lib/techIcons";
 
 interface Props {
@@ -88,6 +89,19 @@ export const TechPicker = ({ name, label, hint }: Props) => {
 					Todavía no hay tecnologías elegidas.
 				</p>
 			)}
+
+			{selected.length > 0 ? (
+				<figure className="flex flex-col gap-1.5">
+					{/* Una sola peticion para todo el conjunto: asi se ve junto. */}
+					<img
+						src={techStackUrl(selected)}
+						alt={`Vista previa: ${selected.join(", ")}`}
+						height={48}
+						className="h-12 w-auto max-w-full self-start"
+					/>
+					<figcaption className="eyebrow">Vista previa del conjunto</figcaption>
+				</figure>
+			) : null}
 
 			<Input
 				id={searchId}

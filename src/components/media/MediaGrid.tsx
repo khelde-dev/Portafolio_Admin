@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { LocalTime } from "@/components/LocalTime";
+import { MediaImage } from "@/components/media/MediaImage";
 import {
 	FIELD_LABELS,
 	type MediaObject,
@@ -7,7 +8,6 @@ import {
 	usageHref,
 } from "@/components/media/mediaTypes";
 import { StatusBadge } from "@/components/StatusBadge";
-import { mediaUrl } from "@/lib/media";
 import { cn } from "@/lib/utils";
 import { formatBytes } from "@/lib/webp";
 
@@ -38,11 +38,9 @@ export const MediaGrid = ({
 	>
 		{objects.map((object) => {
 			const thumb = (
-				<img
-					src={mediaUrl(object.key)}
-					alt=""
+				<MediaImage
+					mediaKey={object.key}
 					loading="lazy"
-					decoding="async"
 					className="aspect-square w-full object-contain"
 				/>
 			);

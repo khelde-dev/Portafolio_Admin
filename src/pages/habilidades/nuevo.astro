@@ -1,0 +1,10 @@
+---
+import { SkillForm } from "@/components/content/SkillForm";
+import PageHeader from "@/components/PageHeader.astro";
+import AdminLayout from "@/layouts/AdminLayout.astro";
+---
+
+<AdminLayout title="Nuevo grupo" activeId="habilidades" crumbs={[{ label: "Nuevo grupo" }]}>
+	<PageHeader title="Nuevo grupo" description="Un grupo de tecnologías con su título en tres idiomas." />
+	<SkillForm client:load />
+</AdminLayout>

@@ -1,0 +1,25 @@
+---
+import { EducationList } from "@/components/content/ContentLists";
+import PageHeader from "@/components/PageHeader.astro";
+import { buttonVariants } from "@/components/ui/button";
+import AdminLayout from "@/layouts/AdminLayout.astro";
+import { cn } from "@/lib/utils";
+import type { EducationRow } from "@/schemas/content";
+import { loadList } from "@/server/data";
+
+const { data, error } = await loadList<EducationRow[]>(
+	Astro.request,
+	"/education/admin",
+);
+---
+
+<AdminLayout title="Educación" activeId="educacion" crumbs={[{ label: "Educación" }]}>
+	<PageHeader
+		title="Educación"
+		description="Tus estudios. El orden de la lista es el del sitio."
+		meta={data ? `${data.length} elementos` : undefined}
+	>
+		<a href="/educacion/nuevo" class={cn(buttonVariants(), "min-h-11 px-4")}>Nuevo estudio</a>
+	</PageHeader>
+	<EducationList client:load initial={data} initialError={error} />
+</AdminLayout>

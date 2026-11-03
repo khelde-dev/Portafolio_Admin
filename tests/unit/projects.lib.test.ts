@@ -17,6 +17,7 @@ const {
 	KNOWN_TECHNOLOGIES,
 	suggestTechnologies,
 	techIconUrl,
+	techStackUrl,
 } = await import("@/lib/techIcons");
 
 const row = (over: Partial<ProjectRow> = {}): ProjectRow => ({
@@ -161,6 +162,17 @@ describe("tecnologias", () => {
 		expect(techIconUrl("a&b")).toBe(
 			"https://icons.example.dev/api/icons?i=a%26b",
 		);
+	});
+
+	it("varias tecnologias van en una sola URL, separadas por coma y cada una codificada", () => {
+		expect(techStackUrl(["git", "docker", "c"])).toBe(
+			"https://icons.example.dev/api/icons?i=git,docker,c",
+		);
+		// Un + sin codificar se leeria como espacio.
+		expect(techStackUrl(["c++", "node.js"])).toBe(
+			"https://icons.example.dev/api/icons?i=c%2B%2B,node.js",
+		);
+		expect(techStackUrl([])).toBe("https://icons.example.dev/api/icons?i=");
 	});
 
 	it("las sugerencias filtran, excluyen las elegidas y respetan el limite", () => {

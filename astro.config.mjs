@@ -57,6 +57,14 @@ export default defineConfig({
 				access: "public",
 				default: "",
 			}),
+			// SOLO desarrollo: llave PRIVADA de prueba (JWK en JSON) con la que el admin
+			// firma un JWT de Access falso para hablar con el backend local. La genera
+			// `pnpm dev:access`. En produccion no existe y no se lee.
+			DEV_ACCESS_KEY: envField.string({
+				context: "server",
+				access: "secret",
+				optional: true,
+			}),
 			// Secreto opcional: correos permitidos (separados por coma). Defensa en
 			// profundidad por si la politica de Access se relaja. Va como secreto y
 			// no en wrangler.jsonc porque el repositorio es publico.

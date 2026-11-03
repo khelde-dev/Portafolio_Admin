@@ -1,0 +1,47 @@
+---
+import { EducationForm } from "@/components/content/EducationForm";
+import PageHeader from "@/components/PageHeader.astro";
+import { buttonVariants } from "@/components/ui/button";
+import AdminLayout from "@/layouts/AdminLayout.astro";
+import { cn } from "@/lib/utils";
+import { resourceId } from "@/schemas/common";
+import type { EducationRow } from "@/schemas/content";
+import { loadList } from "@/server/data";
+
+// El backend no tiene "uno por id" para el CMS: se lee la lista y se busca.
+const id = resourceId.safeParse(Astro.params.id);
+const { data, error } = await loadList<EducationRow[]>(
+	Astro.request,
+	"/education/admin",
+);
+const item = id.success
+	? data?.find((r) => r.education_id === id.data)
+	: undefined;
+
+if (!error && !item) Astro.response.status = 404;
+---
+
+<AdminLayout
+	title={item ? item.institution_default : "Educación"}
+	activeId="educacion"
+	crumbs={[{ label: item?.institution_default ?? "No encontrado" }]}
+>
+	{
+		item ? (
+			<>
+				<PageHeader title={item.institution_default} />
+				<EducationForm client:load initial={item} />
+			</>
+		) : (
+			<>
+				<PageHeader title={error ? "No se pudo cargar" : "No encontrado"} />
+				<p class="max-w-[62ch] text-muted-foreground">
+					{error ?? "Ese elemento ya no existe o la dirección no es correcta."}
+				</p>
+				<a href="/educacion" class={cn(buttonVariants({ variant: "outline" }), "mt-6 min-h-11 px-4")}>
+					Volver a Educación
+				</a>
+			</>
+		)
+	}
+</AdminLayout>

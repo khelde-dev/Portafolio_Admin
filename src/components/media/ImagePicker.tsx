@@ -4,6 +4,7 @@ import { get, useFormContext } from "react-hook-form";
 import { FieldShell, fieldIds } from "@/components/form/fields";
 import { ImageUploader } from "@/components/media/ImageUploader";
 import { MediaGrid } from "@/components/media/MediaGrid";
+import { MediaImage } from "@/components/media/MediaImage";
 import type { MediaListing } from "@/components/media/mediaTypes";
 import { ErrorState, ListSkeleton } from "@/components/states";
 import { Button } from "@/components/ui/button";
@@ -16,7 +17,6 @@ import {
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useResource } from "@/hooks/useResource";
-import { mediaUrl } from "@/lib/media";
 import type { UploadUse } from "@/lib/webp";
 
 interface DialogProps {
@@ -143,9 +143,10 @@ export const ImagePickerField = ({
 		>
 			<div className="flex flex-wrap items-center gap-4">
 				{value ? (
-					<img
-						src={mediaUrl(value)}
+					<MediaImage
+						mediaKey={value}
 						alt={`Imagen actual: ${value}`}
+						showLabel
 						className="size-24 rounded-lg border border-border bg-muted object-contain"
 					/>
 				) : (
@@ -220,9 +221,8 @@ export const GalleryField = ({
 				>
 					{keys.map((key, index) => (
 						<li key={key} className="flex flex-col gap-1.5">
-							<img
-								src={mediaUrl(key)}
-								alt=""
+							<MediaImage
+								mediaKey={key}
 								loading="lazy"
 								className="aspect-square w-full rounded-lg border border-border bg-muted object-contain"
 							/>

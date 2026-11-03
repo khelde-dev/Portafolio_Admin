@@ -1,4 +1,9 @@
-import { BackendError, callBackend } from "@/server/backendClient";
+import {
+	BackendError,
+	callBackend,
+	type FailReason,
+	rejectionMessage,
+} from "@/server/backendClient";
 
 export interface BackendHealth {
 	ok: boolean;
@@ -55,4 +60,48 @@ export const meetsVersion = (
 		if (diff !== 0) return diff > 0;
 	}
 	return true;
+};
+
+export interface AuthProbe {
+	ok: boolean;
+	status: number | null;
+	reason: FailReason | null;
+	/** Que pasa y donde se arregla (vacio si todo bien). */
+	hint: string;
+}
+
+/**
+ * Una peticion REAL a una ruta del CMS (`unread-count`, barata) con el token y el
+ * JWT de la peticion: es lo que de verdad falla cuando "las pantallas no cargan".
+ * `GET /api` es publico y no prueba nada de esto.
+ */
+export const probeBackendAuth = async (
+	request: Request,
+	call: typeof callBackend = callBackend,
+): Promise<AuthProbe> => {
+	try {
+		await call("/contact-messages/unread-count", {
+			accessJwt: request.headers.get("Cf-Access-Jwt-Assertion"),
+			timeoutMs: 4000,
+		});
+		return { ok: true, status: null, reason: null, hint: "" };
+	} catch (error) {
+		if (error instanceof BackendError) {
+			return {
+				ok: false,
+				status: error.status,
+				reason: error.reason,
+				hint:
+					error.status === 401 || error.status === 403 || error.status === 503
+						? rejectionMessage(error.reason)
+						: `El backend respondió con el estado ${error.status}.`,
+			};
+		}
+		return {
+			ok: false,
+			status: null,
+			reason: null,
+			hint: "No hubo respuesta del backend.",
+		};
+	}
 };
