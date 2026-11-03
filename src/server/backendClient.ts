@@ -42,6 +42,8 @@ const REASONS: Record<string, FailReason> = {
 	"Invalid token": "bearer",
 	"No Authorization header": "bearer",
 	"Invalid Authorization header": "bearer",
+	// Con API_TOKEN_ADMIN configurado en el backend, el del sitio publico no sirve para el CMS.
+	"El token no sirve para el CMS": "bearer",
 	"Falta la sesion de Cloudflare Access": "access-missing",
 	"Sesion de Access invalida": "access-invalid",
 	"Cloudflare Access no esta configurado": "access-unconfigured",
@@ -61,7 +63,7 @@ export const classifyReason = (payload: unknown): FailReason | null => {
 export const rejectionMessage = (reason: FailReason | null): string => {
 	switch (reason) {
 		case "bearer":
-			return "El backend no aceptó el token. API_SECRET_TOKEN del admin debe valer lo mismo que API_TOKEN del backend.";
+			return "El backend no aceptó el token. API_SECRET_TOKEN del admin debe valer lo mismo que API_TOKEN_ADMIN del backend (o API_TOKEN si no usa uno exclusivo).";
 		case "access-unconfigured":
 			return "El backend no tiene Cloudflare Access configurado (ACCESS_AUD y ACCESS_TEAM_DOMAIN). En local: corre pnpm dev:access en la carpeta del admin (Portafolio_admin), pega las líneas ACCESS_* que imprime en el .env del backend y reinicia el backend.";
 		case "access-missing":

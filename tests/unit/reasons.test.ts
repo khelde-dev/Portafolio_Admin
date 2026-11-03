@@ -18,6 +18,7 @@ const BACKEND_MESSAGES = {
 		"Invalid token",
 		"No Authorization header",
 		"Invalid Authorization header",
+		"El token no sirve para el CMS",
 	],
 	"access-missing": ["Falta la sesion de Cloudflare Access"],
 	"access-invalid": ["Sesion de Access invalida"],
@@ -95,7 +96,9 @@ describe("callBackend conserva el motivo", () => {
 
 describe("mensajes que dicen donde se arregla", () => {
 	it("cada motivo apunta a su variable", () => {
-		expect(rejectionMessage("bearer")).toMatch(/API_SECRET_TOKEN.*API_TOKEN/);
+		expect(rejectionMessage("bearer")).toMatch(
+			/API_SECRET_TOKEN.*API_TOKEN_ADMIN.*API_TOKEN/,
+		);
 		expect(rejectionMessage("access-unconfigured")).toMatch(
 			/ACCESS_AUD.*dev:access/,
 		);
