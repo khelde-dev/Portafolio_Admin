@@ -43,6 +43,16 @@ const keyCache = new Map<string, { at: number; keys: Jwk[] }>();
 
 const trimSlash = (url: string) => url.replace(/\/+$/, "");
 
+/**
+ * `https://equipo.cloudflareaccess.com` (con o sin barra final) o solo
+ * `equipo.cloudflareaccess.com`: se normaliza a la forma con https://, que es
+ * la del `iss` del JWT. Asi un valor sin esquema no rompe el login.
+ */
+export const normalizeTeam = (team: string): string => {
+	const trimmed = trimSlash(team.trim());
+	return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+};
+
 const b64urlToBytes = (value: string): Uint8Array<ArrayBuffer> => {
 	const padded = value
 		.replaceAll("-", "+")
@@ -122,7 +132,7 @@ export const verifyAccessJwt = async (
 	const header = decodeJson<{ alg?: string; kid?: string }>(h);
 	if (header.alg !== "RS256") throw new Error("Algoritmo no permitido");
 
-	const issuer = trimSlash(team);
+	const issuer = normalizeTeam(team);
 	const signed = `${h}.${p}`;
 	const signature = b64urlToBytes(s);
 
