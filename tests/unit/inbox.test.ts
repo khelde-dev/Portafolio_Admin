@@ -12,9 +12,13 @@ vi.mock("astro:env/server", () => ({
 	API_SECRET_TOKEN: "test-token-value",
 }));
 const { BackendError } = await import("@/server/backendClient");
-const { describeFailure, loadBadges, loadDashboard, loadList } = await import(
-	"@/server/data"
-);
+const {
+	describeFailure,
+	loadBadges,
+	loadDashboard,
+	loadList,
+	loadRecentActivity,
+} = await import("@/server/data");
 
 const req = (jwt?: string) =>
 	new Request("http://localhost/", {
@@ -168,5 +172,31 @@ describe("loadDashboard", () => {
 		const out = await loadDashboard(req(), call);
 		expect(out.data).toBeNull();
 		expect(out.error).toMatch(/Estado/);
+	});
+});
+
+describe("loadRecentActivity", () => {
+	const row = {
+		id: 4,
+		at: "2026-11-02 10:00:00",
+		admin_email: "yo@example.com",
+		action: "update",
+		resource: "projects",
+		resource_id: "7",
+		summary: "Mi proyecto",
+	};
+
+	it("pide los ultimos N con el JWT de la peticion y se queda con lo valido", async () => {
+		const call = vi.fn().mockResolvedValue({ data: [row, { id: "x" }, null] });
+		const out = await loadRecentActivity(req("jwt-1"), 5, call);
+		expect(out).toEqual([row]);
+		expect(call).toHaveBeenCalledWith("/audit?limit=5", { accessJwt: "jwt-1" });
+	});
+
+	it("si el backend aun no tiene el historial, el Panel sigue: lista vacia", async () => {
+		const call = vi.fn().mockRejectedValue(new BackendError(404));
+		expect(await loadRecentActivity(req(), 5, call)).toEqual([]);
+		const down = vi.fn().mockRejectedValue(new TypeError("red"));
+		expect(await loadRecentActivity(req(), 5, down)).toEqual([]);
 	});
 });

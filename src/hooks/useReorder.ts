@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from "react";
-import toast from "react-hot-toast";
+import { toast } from "@/components/Toaster";
 import { ApiFailure, api } from "@/lib/apiClient";
 
 /** Mueve el elemento `from` a `to` (sin mutar la lista). */

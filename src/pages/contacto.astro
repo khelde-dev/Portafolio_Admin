@@ -1,0 +1,30 @@
+---
+import { ContactForm } from "@/components/contact/ContactForm";
+import PageHeader from "@/components/PageHeader.astro";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import AdminLayout from "@/layouts/AdminLayout.astro";
+import type { ContactRow } from "@/schemas/contact";
+import { loadList } from "@/server/data";
+
+// Es una sola fila: puede no existir todavia (entonces el formulario arranca vacio).
+const { data, error } = await loadList<ContactRow | null>(
+	Astro.request,
+	"/contact-info/admin",
+);
+---
+
+<AdminLayout title="Contacto" activeId="contacto" crumbs={[{ label: "Contacto" }]}>
+	<PageHeader
+		title="Contacto"
+		description="Los enlaces y datos que muestra el sitio. Es una sola ficha: se edita, no se crea ni se borra. Los mensajes que te escriben están en Mensajes."
+	/>
+	{
+		error ? (
+			<Alert variant="destructive">
+<AlertDescription>{error} <a class="underline underline-offset-4" href="/estado">Ver estado</a></AlertDescription>
+</Alert>
+		) : (
+			<ContactForm client:load initial={data} />
+		)
+	}
+</AdminLayout>

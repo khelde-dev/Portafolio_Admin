@@ -1,11 +1,13 @@
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import { useCallback, useState } from "react";
 import { ConfirmDelete } from "@/components/ConfirmDelete";
-import { IndexList } from "@/components/IndexList";
+import { type Column, DataTable } from "@/components/DataTable";
 import { MediaImage } from "@/components/media/MediaImage";
 import { MoveButtons, OrderBar } from "@/components/OrderControls";
 import { EmptyState, ErrorState } from "@/components/states";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { useDeleteTarget } from "@/hooks/useDeleteTarget";
 import { useReorder } from "@/hooks/useReorder";
 import { ApiFailure, api } from "@/lib/apiClient";
 import { cn } from "@/lib/utils";
@@ -59,8 +61,12 @@ export function ContentList<T>({
 	const { rows, replace } = order;
 	const [loadError, setLoadError] = useState<string | null>(initialError);
 	const [notice, setNotice] = useState<string | null>(null);
-	const [deleting, setDeleting] = useState<T | null>(null);
 	const [busy, setBusy] = useState(false);
+	// El modal de borrado vive en la URL (?borrar=<id>).
+	const { deleting, requestDelete, cancelDelete } = useDeleteTarget(
+		rows,
+		getId,
+	);
 
 	const reload = useCallback(async () => {
 		setLoadError(null);
@@ -79,9 +85,9 @@ export function ContentList<T>({
 		try {
 			await api.delete(`/api/${resource}/${getId(deleting)}`);
 			replace(rows.filter((r) => getId(r) !== getId(deleting)));
-			setDeleting(null);
+			cancelDelete();
 		} catch (error) {
-			setDeleting(null);
+			cancelDelete();
 			setNotice(
 				error instanceof ApiFailure ? error.message : "No se pudo borrar.",
 			);
@@ -109,15 +115,91 @@ export function ContentList<T>({
 		);
 	}
 
+	const columns: Column<T>[] = [
+		...(thumb
+			? [
+					{
+						id: "image",
+						header: "Imagen",
+						hideHeader: true,
+						className: "w-16",
+						cell: (row: T) => {
+							const image = thumb(row);
+							return image ? (
+								<MediaImage
+									mediaKey={image}
+									loading="lazy"
+									className="size-14 rounded-lg border border-border bg-muted object-contain"
+								/>
+							) : null;
+						},
+					},
+				]
+			: []),
+		{
+			id: "name",
+			header: "Nombre",
+			className: "min-w-0 max-md:flex-1",
+			cell: (row) => (
+				<div className="min-w-0">
+					<a
+						href={editHref(row)}
+						className="font-serif-display text-heading hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+					>
+						{getTitle(row)}
+					</a>
+					<p className="eyebrow mt-1.5 break-words">{describe(row)}</p>
+				</div>
+			),
+		},
+		{
+			id: "actions",
+			header: "Acciones",
+			hideHeader: true,
+			className: "md:w-px md:whitespace-nowrap max-md:w-full",
+			cell: (row) => {
+				const index = rows.findIndex((r) => getId(r) === getId(row));
+				const title = getTitle(row);
+				return (
+					<div className="flex items-center gap-0.5">
+						<MoveButtons
+							name={title}
+							index={index}
+							count={rows.length}
+							onMove={(delta) => order.move(index, delta)}
+						/>
+						<a
+							href={editHref(row)}
+							className={cn(
+								buttonVariants({ variant: "ghost", size: "icon" }),
+								"size-11",
+							)}
+							aria-label={`Editar ${title}`}
+						>
+							<Pencil aria-hidden="true" />
+						</a>
+						<Button
+							type="button"
+							variant="ghost"
+							size="icon"
+							className="size-11 text-destructive"
+							onClick={() => requestDelete(row)}
+							aria-label={`Borrar ${title}`}
+						>
+							<Trash2 aria-hidden="true" />
+						</Button>
+					</div>
+				);
+			},
+		},
+	];
+
 	return (
 		<>
 			{notice ? (
-				<p
-					role="alert"
-					className="mb-5 rounded-lg border border-destructive/40 bg-destructive/5 px-4 py-3 font-medium text-destructive"
-				>
-					{notice}
-				</p>
+				<Alert variant="destructive" className="mb-5">
+					<AlertDescription>{notice}</AlertDescription>
+				</Alert>
 			) : null}
 
 			<OrderBar
@@ -128,78 +210,19 @@ export function ContentList<T>({
 				onDiscard={order.discard}
 			/>
 
-			<IndexList
+			<DataTable
 				rows={rows}
 				getId={getId}
 				label={label}
 				searchLabel={`Buscar ${noun}`}
 				searchText={searchText}
 				empty={null}
-				renderRow={(row) => {
-					const index = rows.findIndex((r) => getId(r) === getId(row));
-					const image = thumb?.(row);
-					const title = getTitle(row);
-					return (
-						<div
-							className={cn(
-								"grid items-center gap-x-4 gap-y-3 px-1 py-4",
-								image
-									? "md:grid-cols-[3.5rem_minmax(0,1fr)_auto]"
-									: "md:grid-cols-[minmax(0,1fr)_auto]",
-							)}
-						>
-							{image ? (
-								<MediaImage
-									mediaKey={image}
-									loading="lazy"
-									className="size-14 rounded-lg border border-border bg-muted object-contain"
-								/>
-							) : null}
-							<div className="min-w-0">
-								<a
-									href={editHref(row)}
-									className="font-serif-display text-heading hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-								>
-									{title}
-								</a>
-								<p className="eyebrow mt-1.5 break-words">{describe(row)}</p>
-							</div>
-							<div className="flex items-center gap-0.5">
-								<MoveButtons
-									name={title}
-									index={index}
-									count={rows.length}
-									onMove={(delta) => order.move(index, delta)}
-								/>
-								<a
-									href={editHref(row)}
-									className={cn(
-										buttonVariants({ variant: "ghost", size: "icon" }),
-										"size-11",
-									)}
-									aria-label={`Editar ${title}`}
-								>
-									<Pencil aria-hidden="true" />
-								</a>
-								<Button
-									type="button"
-									variant="ghost"
-									size="icon"
-									className="size-11 text-destructive"
-									onClick={() => setDeleting(row)}
-									aria-label={`Borrar ${title}`}
-								>
-									<Trash2 aria-hidden="true" />
-								</Button>
-							</div>
-						</div>
-					);
-				}}
+				columns={columns}
 			/>
 
 			<ConfirmDelete
 				open={deleting !== null}
-				onOpenChange={(open) => !open && setDeleting(null)}
+				onOpenChange={(open) => !open && cancelDelete()}
 				name={deleting ? getTitle(deleting) : ""}
 				consequence={deleteConsequence}
 				busy={busy}

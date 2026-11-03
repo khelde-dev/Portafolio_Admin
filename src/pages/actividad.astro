@@ -1,0 +1,165 @@
+---
+import { ActivityFilter } from "@/components/ActivityFilter";
+import { PageControls, pageOf, pageSizeOf } from "@/components/PageControls";
+import PageHeader from "@/components/PageHeader.astro";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+	Table,
+	TableBody,
+	TableCell,
+	TableHead,
+	TableHeader,
+	TableRow,
+} from "@/components/ui/table";
+import AdminLayout from "@/layouts/AdminLayout.astro";
+import {
+	type AuditEntry,
+	describeEntry,
+	isKnownResource,
+	parseAudit,
+	RESOURCE_OPTIONS,
+} from "@/lib/activity";
+import { parseD1Date } from "@/lib/format";
+import { loadList } from "@/server/data";
+
+// Los ultimos 1 000 cambios que conserva el backend (solo lectura).
+const { data, error } = await loadList<unknown>(
+	Astro.request,
+	"/audit?limit=1000",
+);
+const all: AuditEntry[] = parseAudit(data);
+
+// El filtro, la pagina y el tamano viven en la URL (?recurso, ?pagina, ?por).
+const requested = Astro.url.searchParams.get("recurso");
+const resource = isKnownResource(requested) ? requested : null;
+const entries = resource ? all.filter((e) => e.resource === resource) : all;
+
+const pageSize = pageSizeOf(Astro.url.searchParams.get("por") ?? "");
+const pageCount = Math.max(1, Math.ceil(entries.length / pageSize));
+const page = Math.min(
+	pageOf(Astro.url.searchParams.get("pagina") ?? ""),
+	pageCount,
+);
+const shown = entries.slice((page - 1) * pageSize, page * pageSize);
+
+const DOT: Record<AuditEntry["action"], string> = {
+	create: "bg-primary",
+	update: "bg-muted-foreground",
+	delete: "bg-destructive",
+};
+
+// Sin JS la hora sale en UTC; el script de abajo la pasa a la zona del navegador.
+const utc = (value: string) => {
+	const date = parseD1Date(value);
+	return date
+		? `${date.toISOString().slice(0, 16).replace("T", " ")} UTC`
+		: "—";
+};
+---
+
+<AdminLayout title="Actividad" activeId="actividad" crumbs={[{ label: "Actividad" }]}>
+	<PageHeader
+		title="Actividad"
+		description="Lo que se creó, editó o borró desde el panel, con el correo de quien lo hizo. Se conservan los últimos 1 000 cambios."
+	/>
+	{
+		error ? (
+			<Alert variant="destructive">
+				<AlertDescription>
+					{error} <a class="underline underline-offset-4" href="/estado">Ver estado</a>
+				</AlertDescription>
+			</Alert>
+		) : (
+			<>
+				<div class="mb-6 flex flex-wrap items-end gap-3">
+					<ActivityFilter client:load value={resource ?? ""} options={RESOURCE_OPTIONS} />
+					{resource ? (
+						<a href="/actividad" class="min-h-11 content-center text-sm underline underline-offset-4">
+							Quitar el filtro
+						</a>
+					) : null}
+				</div>
+
+				<p class="eyebrow mb-3" aria-live="polite">
+					{entries.length === 1 ? "1 cambio" : `${entries.length} cambios`}
+					{pageCount > 1 ? `, página ${page} de ${pageCount}` : ""}
+				</p>
+
+				{entries.length === 0 ? (
+					<div class="rounded-lg border border-dashed border-border px-6 py-12 text-center">
+						<p class="font-serif-display text-heading">
+							{resource ? "Sin cambios de este tipo" : "Todavía no hay cambios"}
+						</p>
+						<p class="mt-2 text-muted-foreground">
+							{resource
+								? "Quita el filtro para ver todo."
+								: "Aparecerán aquí cuando guardes algo desde el panel."}
+						</p>
+					</div>
+				) : (
+					<>
+						<Table aria-label="Cambios">
+							<TableHeader className="max-md:sr-only">
+								<TableRow>
+									<TableHead className="w-44">Cuándo</TableHead>
+									<TableHead>Qué</TableHead>
+									<TableHead className="md:text-right">Quién</TableHead>
+								</TableRow>
+							</TableHeader>
+							<TableBody>
+								{shown.map((entry) => {
+									const line = describeEntry(entry);
+									return (
+										<TableRow className="max-md:flex max-md:flex-wrap max-md:gap-x-4">
+											<TableCell className="whitespace-normal">
+												<time
+													data-local
+													datetime={parseD1Date(entry.at)?.toISOString()}
+													class="eyebrow"
+												>
+													{utc(entry.at)}
+												</time>
+											</TableCell>
+											<TableCell className="min-w-0 whitespace-normal break-words">
+												<span class="inline-flex items-center gap-2 font-medium">
+													<span aria-hidden="true" class={`size-2 rounded-full ${DOT[entry.action]}`} />
+													{line.verb}
+												</span>{" "}
+												{line.href ? (
+													<a
+														href={line.href}
+														class="underline decoration-border underline-offset-4 hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+													>
+														{line.label}
+													</a>
+												) : (
+													line.label
+												)}
+												{line.summary ? <span class="text-muted-foreground">{` «${line.summary}»`}</span> : null}
+											</TableCell>
+											<TableCell className="whitespace-normal break-all md:text-right">
+												<span class="eyebrow">{entry.admin_email}</span>
+											</TableCell>
+										</TableRow>
+									);
+								})}
+							</TableBody>
+						</Table>
+						<div class="mt-4">
+							<PageControls client:load page={page} pageCount={pageCount} pageSize={pageSize} reload />
+						</div>
+					</>
+				)}
+			</>
+		)
+	}
+</AdminLayout>
+
+<script>
+	import { formatDateTime, parseD1Date } from "@/lib/format";
+
+	for (const el of document.querySelectorAll<HTMLTimeElement>("time[data-local]")) {
+		const date = parseD1Date(el.getAttribute("datetime"));
+		if (date) el.textContent = formatDateTime(date);
+	}
+</script>

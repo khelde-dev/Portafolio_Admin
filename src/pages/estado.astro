@@ -2,8 +2,17 @@
 import { ACCESS_AUD, ACCESS_TEAM_DOMAIN, ADMIN_EMAILS } from "astro:env/server";
 import PageHeader from "@/components/PageHeader.astro";
 import { Badge } from "@/components/ui/badge";
+import {
+	Table,
+	TableBody,
+	TableCell,
+	TableHead,
+	TableHeader,
+	TableRow,
+} from "@/components/ui/table";
 import AdminLayout from "@/layouts/AdminLayout.astro";
 import {
+	backendChannel,
 	getBackendHealth,
 	MIN_BACKEND_VERSION,
 	meetsVersion,
@@ -16,6 +25,7 @@ const [health, auth] = await Promise.all([
 	probeBackendAuth(Astro.request),
 ]);
 const versionOk = meetsVersion(health.version);
+const channel = await backendChannel();
 
 // Solo si estan puestos: nunca se muestran los valores.
 const checks = [
@@ -57,7 +67,7 @@ const checks = [
 		description="Primer lugar donde mirar cuando algo no carga."
 	/>
 
-	<dl class="mb-8 grid gap-px overflow-hidden rounded-lg border border-border bg-border sm:grid-cols-3">
+	<dl class="mb-8 grid gap-px overflow-hidden rounded-lg border border-border bg-border sm:grid-cols-4">
 		<div class="bg-card px-5 py-4">
 			<dt class="text-muted-foreground">Admin</dt>
 			<dd class="mt-1 font-serif-display text-heading">{pkg.version}</dd>
@@ -70,23 +80,41 @@ const checks = [
 			<dt class="text-muted-foreground">Tiempo de respuesta</dt>
 			<dd class="mt-1 font-serif-display text-heading">{health.ms} ms</dd>
 		</div>
+		<div class="bg-card px-5 py-4">
+			<dt class="text-muted-foreground">Conexión</dt>
+			<dd class="mt-1 font-serif-display text-heading">
+				{channel === "binding" ? "Service Binding" : "URL pública"}
+			</dd>
+		</div>
 	</dl>
 
-	<ul class="divide-y divide-border rounded-lg border border-border bg-card">
-		{
-			checks.map((check) => (
-				<li class="flex flex-wrap items-center gap-x-4 gap-y-1 px-5 py-4">
-					<span class="min-w-0 flex-1">{check.label}</span>
-					{check.ok ? (
-						<Badge variant="secondary">Correcto</Badge>
-					) : (
-						<Badge variant="destructive">Revisar</Badge>
-					)}
-					{!check.ok ? (
-						<p class="w-full text-sm text-muted-foreground">{check.hint}</p>
-					) : null}
-				</li>
-			))
-		}
-	</ul>
+	<Table aria-label="Comprobaciones">
+		<TableHeader>
+			<TableRow>
+				<TableHead>Comprobación</TableHead>
+				<TableHead className="w-32">Resultado</TableHead>
+			</TableRow>
+		</TableHeader>
+		<TableBody>
+			{
+				checks.map((check) => (
+					<TableRow>
+						<TableCell className="whitespace-normal">
+							<p>{check.label}</p>
+							{!check.ok ? (
+								<p class="mt-1 text-sm text-muted-foreground">{check.hint}</p>
+							) : null}
+						</TableCell>
+						<TableCell className="align-top">
+							{check.ok ? (
+								<Badge variant="secondary">Correcto</Badge>
+							) : (
+								<Badge variant="destructive">Revisar</Badge>
+							)}
+						</TableCell>
+					</TableRow>
+				))
+			}
+		</TableBody>
+	</Table>
 </AdminLayout>

@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef } from "react";
 import { Controller, get, useFormContext, useWatch } from "react-hook-form";
+import { SimpleSelect } from "@/components/form/SimpleSelect";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import {
@@ -11,8 +12,8 @@ import {
 	yearOptions,
 } from "@/lib/period";
 
-const selectClass =
-	"min-h-11 w-full rounded-lg border border-input bg-background px-3 text-base focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none aria-invalid:border-destructive";
+// "" = sin mes: el mes es opcional, y esta opcion permite quitarlo.
+const months = [{ value: "", label: "Mes (opcional)" }, ...MONTH_OPTIONS];
 
 interface DateSelectsProps {
 	prefix: "period.start" | "period.end";
@@ -28,7 +29,7 @@ const DateSelects = ({
 	invalid,
 	describedBy,
 }: DateSelectsProps) => {
-	const { register } = useFormContext();
+	const { control } = useFormContext();
 	const monthId = useId();
 	const yearId = useId();
 	const years = yearOptions();
@@ -39,39 +40,40 @@ const DateSelects = ({
 				<Label htmlFor={monthId} className="sr-only">
 					Mes de {legend.toLowerCase()}
 				</Label>
-				<select
-					id={monthId}
-					className={selectClass}
-					aria-invalid={invalid || undefined}
-					aria-describedby={describedBy}
-					{...register(`${prefix}Month`)}
-				>
-					<option value="">Mes (opcional)</option>
-					{MONTH_OPTIONS.map((m) => (
-						<option key={m.value} value={m.value}>
-							{m.label}
-						</option>
-					))}
-				</select>
+				<Controller
+					control={control}
+					name={`${prefix}Month`}
+					render={({ field }) => (
+						<SimpleSelect
+							id={monthId}
+							value={(field.value as string | undefined) ?? ""}
+							onValueChange={field.onChange}
+							options={months}
+							aria-invalid={invalid || undefined}
+							aria-describedby={describedBy}
+						/>
+					)}
+				/>
 			</div>
 			<div>
 				<Label htmlFor={yearId} className="sr-only">
 					Año de {legend.toLowerCase()}
 				</Label>
-				<select
-					id={yearId}
-					className={selectClass}
-					aria-invalid={invalid || undefined}
-					aria-describedby={describedBy}
-					{...register(`${prefix}Year`)}
-				>
-					<option value="">Año</option>
-					{years.map((y) => (
-						<option key={y.value} value={y.value}>
-							{y.label}
-						</option>
-					))}
-				</select>
+				<Controller
+					control={control}
+					name={`${prefix}Year`}
+					render={({ field }) => (
+						<SimpleSelect
+							id={yearId}
+							value={(field.value as string | undefined) ?? ""}
+							onValueChange={field.onChange}
+							options={years}
+							placeholder="Año"
+							aria-invalid={invalid || undefined}
+							aria-describedby={describedBy}
+						/>
+					)}
+				/>
 			</div>
 		</fieldset>
 	);

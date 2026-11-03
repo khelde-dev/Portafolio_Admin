@@ -1,4 +1,5 @@
 import { ArrowDown, ArrowUp } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -61,9 +62,9 @@ export const OrderBar = ({
 			)}
 		>
 			{error ? (
-				<p role="alert" className="font-medium text-destructive">
-					{error}
-				</p>
+				<Alert variant="destructive" className="border-0 bg-transparent p-0">
+					<AlertDescription>{error}</AlertDescription>
+				</Alert>
 			) : (
 				<output className="eyebrow block">
 					El orden cambió y todavía no se guarda

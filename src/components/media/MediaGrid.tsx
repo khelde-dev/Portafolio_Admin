@@ -8,6 +8,7 @@ import {
 	usageHref,
 } from "@/components/media/mediaTypes";
 import { StatusBadge } from "@/components/StatusBadge";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { formatBytes } from "@/lib/webp";
 
@@ -48,20 +49,21 @@ export const MediaGrid = ({
 			return (
 				<li key={object.key} className="flex min-w-0 flex-col gap-2">
 					{onPick ? (
-						<button
+						<Button
 							type="button"
+							variant="ghost"
 							onClick={() => onPick(object)}
 							aria-pressed={selected}
 							aria-label={`Elegir ${object.key}`}
 							className={cn(
-								"overflow-hidden rounded-lg border bg-muted transition-colors hover:border-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
+								"h-auto w-full overflow-hidden rounded-lg border bg-muted p-0 hover:border-primary hover:bg-muted",
 								selected
 									? "border-primary ring-2 ring-primary/40"
 									: "border-border",
 							)}
 						>
 							{thumb}
-						</button>
+						</Button>
 					) : (
 						<div className="overflow-hidden rounded-lg border border-border bg-muted">
 							{thumb}

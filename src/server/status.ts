@@ -18,6 +18,9 @@ export interface BackendHealth {
  * `GET /api` del backend es publico (responde antes del bearer): sirve para
  * saber si esta vivo y que version corre, sin gastar una consulta de datos.
  */
+/** `binding` = por el Service Binding (sin salir a internet); `url` = por la URL publica. */
+export { backendChannel } from "@/server/backendClient";
+
 export const getBackendHealth = async (
 	call: typeof callBackend = callBackend,
 	now: () => number = Date.now,
@@ -42,7 +45,7 @@ export const getBackendHealth = async (
 };
 
 /** Version minima del backend que este admin necesita (se sube con cada fase). */
-export const MIN_BACKEND_VERSION = "0.9.0";
+export const MIN_BACKEND_VERSION = "0.10.0";
 
 const parts = (version: string) =>
 	version.split(".").map((n) => Number.parseInt(n, 10) || 0);

@@ -1,10 +1,15 @@
 import { ArrowLeft, Mail, MessageCircle, Phone, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { ConfirmDelete } from "@/components/ConfirmDelete";
+import { type Column, DataTable } from "@/components/DataTable";
+import { FilterToggle } from "@/components/form/FilterToggle";
 import { LocalTime } from "@/components/LocalTime";
 import { StatusBadge, type Tone } from "@/components/StatusBadge";
 import { EmptyState, ErrorState } from "@/components/states";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { useDeleteTarget } from "@/hooks/useDeleteTarget";
+import { useUrlParam } from "@/hooks/useUrlParams";
 import { ApiFailure, api } from "@/lib/apiClient";
 import { mailtoHref, snippet, telHref, whatsappHref } from "@/lib/contact";
 import { cn } from "@/lib/utils";
@@ -43,10 +48,16 @@ interface Props {
 export const InboxApp = ({ initial, initialError = null }: Props) => {
 	const [rows, setRows] = useState<MessageRow[]>(initial ?? []);
 	const [loadError, setLoadError] = useState<string | null>(initialError);
-	const [filter, setFilter] = useState<Filter>("all");
-	const [selectedId, setSelectedId] = useState<number | null>(null);
+	// El filtro, el mensaje abierto y el modal de borrar viven en la URL.
+	const [filterRaw, setFilter] = useUrlParam("estado", "all", {
+		resetsPage: true,
+	});
+	const filter: Filter = FILTERS.some((f) => f.value === filterRaw)
+		? (filterRaw as Filter)
+		: "all";
+	const [openedRaw, setOpened] = useUrlParam("mensaje");
+	const selectedId = /^\d+$/.test(openedRaw) ? Number(openedRaw) : null;
 	const [notice, setNotice] = useState<string | null>(null);
-	const [confirming, setConfirming] = useState(false);
 	const [busy, setBusy] = useState(false);
 
 	const counts = useMemo(() => {
@@ -65,6 +76,10 @@ export const InboxApp = ({ initial, initialError = null }: Props) => {
 		[rows, filter],
 	);
 	const selected = rows.find((r) => r.message_id === selectedId) ?? null;
+	const { deleting, requestDelete, cancelDelete } = useDeleteTarget(
+		rows,
+		(row) => row.message_id,
+	);
 
 	const reload = async () => {
 		setLoadError(null);
@@ -98,7 +113,7 @@ export const InboxApp = ({ initial, initialError = null }: Props) => {
 	};
 
 	const open = (row: MessageRow) => {
-		setSelectedId(row.message_id);
+		setOpened(String(row.message_id), { push: true });
 		setNotice(null);
 		if (row.status === "unread") void setStatus(row, "read");
 	};
@@ -111,10 +126,10 @@ export const InboxApp = ({ initial, initialError = null }: Props) => {
 			setRows((list) =>
 				list.filter((r) => r.message_id !== selected.message_id),
 			);
-			setSelectedId(null);
-			setConfirming(false);
+			setOpened("");
+			cancelDelete();
 		} catch (error) {
-			setConfirming(false);
+			cancelDelete();
 			setNotice(
 				error instanceof ApiFailure ? error.message : "No se pudo borrar.",
 			);
@@ -141,84 +156,83 @@ export const InboxApp = ({ initial, initialError = null }: Props) => {
 		);
 	}
 
+	const columns: Column<MessageRow>[] = [
+		{
+			id: "message",
+			header: "Mensaje",
+			className: "min-w-0 max-md:w-full",
+			cell: (row) => {
+				const active = row.message_id === selectedId;
+				return (
+					<Button
+						type="button"
+						variant="ghost"
+						onClick={() => open(row)}
+						aria-current={active ? "true" : undefined}
+						className={cn(
+							"h-auto min-h-16 w-full flex-col items-stretch gap-1 px-3 py-3 text-left whitespace-normal",
+							active && "bg-muted",
+						)}
+					>
+						<span className="flex items-baseline justify-between gap-3">
+							<span
+								className={cn(
+									"truncate",
+									row.status === "unread" ? "font-semibold" : "font-medium",
+								)}
+							>
+								{row.status === "unread" ? (
+									<span className="sr-only">Sin leer:</span>
+								) : null}{" "}
+								{row.name}
+							</span>
+							<LocalTime value={row.created_at} className="eyebrow shrink-0" />
+						</span>
+						<span className="line-clamp-1 text-sm text-muted-foreground">
+							{snippet(row.more_information) || row.email}
+						</span>
+						<StatusBadge tone={TONE[row.status]} className="w-fit">
+							{MESSAGE_STATUS_LABELS[row.status]}
+						</StatusBadge>
+					</Button>
+				);
+			},
+		},
+	];
+
 	return (
 		<div className="grid gap-6 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)]">
 			<section
 				aria-label="Lista de mensajes"
 				className={cn("min-w-0", selected ? "hidden lg:block" : "block")}
 			>
-				<fieldset className="mb-3 flex min-w-0 flex-wrap gap-1">
-					<legend className="sr-only">Filtrar por estado</legend>
-					{FILTERS.map(({ value, label }) => (
-						<button
-							key={value}
-							type="button"
-							aria-pressed={filter === value}
-							onClick={() => setFilter(value)}
-							className={cn(
-								"min-h-11 rounded-md px-3 text-[0.9375rem] font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
-								filter === value
-									? "bg-muted text-foreground"
-									: "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
-							)}
-						>
-							{label}
-							<span className="eyebrow ml-1.5">{counts[value]}</span>
-						</button>
-					))}
-				</fieldset>
-
-				{visible.length === 0 ? (
-					<EmptyState
-						title="Nada en esta vista"
-						description="Cambia el filtro para ver los demás mensajes."
-					/>
-				) : (
-					<ul aria-label="Mensajes" className="border-t border-border">
-						{visible.map((row) => {
-							const active = row.message_id === selectedId;
-							return (
-								<li key={row.message_id} className="border-b border-border">
-									<button
-										type="button"
-										onClick={() => open(row)}
-										aria-current={active ? "true" : undefined}
-										className={cn(
-											"flex w-full min-h-16 flex-col gap-1 px-3 py-3 text-left transition-colors hover:bg-muted/50 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-primary",
-											active && "bg-muted",
-										)}
-									>
-										<span className="flex items-baseline justify-between gap-3">
-											<span
-												className={cn(
-													"truncate",
-													row.status === "unread"
-														? "font-semibold"
-														: "font-medium",
-												)}
-											>
-												{row.status === "unread" ? (
-													<span className="sr-only">Sin leer:</span>
-												) : null}{" "}
-												{row.name}
-											</span>
-											<LocalTime
-												value={row.created_at}
-												className="eyebrow shrink-0"
-											/>
-										</span>
-										<span className="line-clamp-1 text-sm text-muted-foreground">
-											{snippet(row.more_information) || row.email}
-										</span>
-										<StatusBadge tone={TONE[row.status]} className="w-fit">
-											{MESSAGE_STATUS_LABELS[row.status]}
-										</StatusBadge>
-									</button>
-								</li>
-							);
-						})}
-					</ul>
-				)}
+				<DataTable
+					rows={visible}
+					getId={(row) => row.message_id}
+					label="Mensajes"
+					searchLabel="Buscar mensaje"
+					searchText={(row) =>
+						`${row.name} ${row.email} ${row.more_information ?? ""}`
+					}
+					filters={
+						<FilterToggle
+							label="Filtrar por estado"
+							value={filter}
+							onValueChange={(value) => setFilter(value, { push: true })}
+							options={FILTERS.map(({ value, label }) => ({
+								value,
+								label: (
+									<>
+										{label}
+										<span className="eyebrow ml-1.5">{counts[value]}</span>
+									</>
+								),
+							}))}
+						/>
+					}
+					empty={null}
+					columns={columns}
+				/>
 			</section>
 
 			<section
@@ -226,12 +240,9 @@ export const InboxApp = ({ initial, initialError = null }: Props) => {
 				className={cn("min-w-0", selected ? "block" : "hidden lg:block")}
 			>
 				{notice ? (
-					<p
-						role="alert"
-						className="mb-4 rounded-lg border border-destructive/40 bg-destructive/5 px-4 py-3 font-medium text-destructive"
-					>
-						{notice}
-					</p>
+					<Alert variant="destructive" className="mb-4">
+						<AlertDescription>{notice}</AlertDescription>
+					</Alert>
 				) : null}
 
 				{selected ? (
@@ -240,7 +251,7 @@ export const InboxApp = ({ initial, initialError = null }: Props) => {
 							type="button"
 							variant="ghost"
 							className="min-h-11 w-fit px-2 lg:hidden"
-							onClick={() => setSelectedId(null)}
+							onClick={() => setOpened("")}
 						>
 							<ArrowLeft aria-hidden="true" /> Volver a la lista
 						</Button>
@@ -360,15 +371,15 @@ export const InboxApp = ({ initial, initialError = null }: Props) => {
 								type="button"
 								variant="destructive"
 								className="ml-auto min-h-11"
-								onClick={() => setConfirming(true)}
+								onClick={() => requestDelete(selected)}
 							>
 								<Trash2 aria-hidden="true" /> Borrar
 							</Button>
 						</div>
 
 						<ConfirmDelete
-							open={confirming}
-							onOpenChange={setConfirming}
+							open={deleting !== null}
+							onOpenChange={(next) => !next && cancelDelete()}
 							name={selected.name}
 							consequence="Se borra el mensaje y los datos de contacto. No se puede deshacer."
 							busy={busy}

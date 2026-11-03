@@ -1,10 +1,14 @@
 import { Check, EyeOff, RotateCcw, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { ConfirmDelete } from "@/components/ConfirmDelete";
+import { type Column, DataTable } from "@/components/DataTable";
 import { LocalTime } from "@/components/LocalTime";
 import { EmptyState, ErrorState } from "@/components/states";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useDeleteTarget } from "@/hooks/useDeleteTarget";
+import { useUrlParam } from "@/hooks/useUrlParams";
 import { ApiFailure, api } from "@/lib/apiClient";
 import {
 	COMMENT_STATUS_LABELS,
@@ -43,8 +47,19 @@ export const CommentsApp = ({ initial, initialError = null }: Props) => {
 	const [rows, setRows] = useState<CommentRow[]>(initial ?? []);
 	const [loadError, setLoadError] = useState<string | null>(initialError);
 	const [notice, setNotice] = useState<string | null>(null);
-	const [deleting, setDeleting] = useState<CommentRow | null>(null);
+	// La pestana y el modal de borrar viven en la URL (?estado, ?borrar).
+	const [tabRaw, setTab] = useUrlParam("estado", "pending", {
+		resetsPage: true,
+	});
+	const tab = (COMMENT_STATUSES as readonly string[]).includes(tabRaw)
+		? (tabRaw as CommentStatus)
+		: "pending";
 	const [busy, setBusy] = useState(false);
+
+	const { deleting, requestDelete, cancelDelete } = useDeleteTarget(
+		rows,
+		(row) => row.comment_id,
+	);
 
 	const byStatus = useMemo(() => {
 		const groups: Record<CommentStatus, CommentRow[]> = {
@@ -97,9 +112,9 @@ export const CommentsApp = ({ initial, initialError = null }: Props) => {
 			setRows((list) =>
 				list.filter((r) => r.comment_id !== deleting.comment_id),
 			);
-			setDeleting(null);
+			cancelDelete();
 		} catch (error) {
-			setDeleting(null);
+			cancelDelete();
 			setNotice(
 				error instanceof ApiFailure ? error.message : "No se pudo borrar.",
 			);
@@ -118,18 +133,93 @@ export const CommentsApp = ({ initial, initialError = null }: Props) => {
 		);
 	}
 
+	const columnsFor = (status: CommentStatus): Column<CommentRow>[] => [
+		{
+			id: "comment",
+			header: "Comentario",
+			className: "min-w-0 max-md:w-full",
+			cell: (row) => (
+				<div className="min-w-0">
+					<p className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+						<span className="font-serif-display text-heading">{row.name}</span>
+						{row.job ? (
+							<span className="text-muted-foreground">{row.job}</span>
+						) : null}
+					</p>
+					<p className="eyebrow mt-1">
+						{row.country}, <LocalTime value={row.created_at} />
+					</p>
+					{/* Texto de un visitante: siempre como texto. */}
+					<p className="mt-3 max-w-[68ch] whitespace-pre-wrap break-words text-[1.0625rem] leading-relaxed">
+						{row.description}
+					</p>
+				</div>
+			),
+		},
+		{
+			id: "actions",
+			header: "Acciones",
+			hideHeader: true,
+			className: "align-top md:w-px md:whitespace-nowrap max-md:w-full",
+			cell: (row) => (
+				<div className="flex flex-wrap items-start gap-2 md:flex-col md:items-stretch">
+					{status !== "published" ? (
+						<Button
+							type="button"
+							className="min-h-11"
+							onClick={() => setStatus(row, "published")}
+						>
+							<Check aria-hidden="true" /> Publicar
+						</Button>
+					) : null}
+					{status !== "hidden" ? (
+						<Button
+							type="button"
+							variant="outline"
+							className="min-h-11"
+							onClick={() => setStatus(row, "hidden")}
+						>
+							<EyeOff aria-hidden="true" /> Ocultar
+						</Button>
+					) : null}
+					{status === "published" ? (
+						<Button
+							type="button"
+							variant="ghost"
+							className="min-h-11"
+							onClick={() => setStatus(row, "pending")}
+						>
+							<RotateCcw aria-hidden="true" /> Volver a pendiente
+						</Button>
+					) : null}
+					{status === "hidden" ? (
+						<Button
+							type="button"
+							variant="destructive"
+							className="min-h-11"
+							onClick={() => requestDelete(row)}
+						>
+							<Trash2 aria-hidden="true" /> Borrar
+						</Button>
+					) : null}
+				</div>
+			),
+		},
+	];
+
 	return (
 		<>
 			{notice ? (
-				<p
-					role="alert"
-					className="mb-5 rounded-lg border border-destructive/40 bg-destructive/5 px-4 py-3 font-medium text-destructive"
-				>
-					{notice}
-				</p>
+				<Alert variant="destructive" className="mb-5">
+					<AlertDescription>{notice}</AlertDescription>
+				</Alert>
 			) : null}
 
-			<Tabs defaultValue="pending" className="gap-5">
+			<Tabs
+				value={tab}
+				onValueChange={(value) => setTab(value as string, { push: true })}
+				className="gap-5"
+			>
 				<TabsList
 					variant="line"
 					aria-label="Estado del comentario"
@@ -148,78 +238,17 @@ export const CommentsApp = ({ initial, initialError = null }: Props) => {
 						{byStatus[status].length === 0 ? (
 							<EmptyState {...EMPTY[status]} />
 						) : (
-							<ul
-								aria-label={COMMENT_STATUS_LABELS[status]}
-								className="border-t border-border"
-							>
-								{byStatus[status].map((row) => (
-									<li
-										key={row.comment_id}
-										className="grid gap-4 border-b border-border px-1 py-5 md:grid-cols-[minmax(0,1fr)_auto]"
-									>
-										<div className="min-w-0">
-											<p className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-												<span className="font-serif-display text-heading">
-													{row.name}
-												</span>
-												{row.job ? (
-													<span className="text-muted-foreground">
-														{row.job}
-													</span>
-												) : null}
-											</p>
-											<p className="eyebrow mt-1">
-												{row.country}, <LocalTime value={row.created_at} />
-											</p>
-											{/* Texto de un visitante: siempre como texto. */}
-											<p className="mt-3 max-w-[68ch] whitespace-pre-wrap break-words text-[1.0625rem] leading-relaxed">
-												{row.description}
-											</p>
-										</div>
-										<div className="flex flex-wrap items-start gap-2 md:flex-col md:items-stretch">
-											{status !== "published" ? (
-												<Button
-													type="button"
-													className="min-h-11"
-													onClick={() => setStatus(row, "published")}
-												>
-													<Check aria-hidden="true" /> Publicar
-												</Button>
-											) : null}
-											{status !== "hidden" ? (
-												<Button
-													type="button"
-													variant="outline"
-													className="min-h-11"
-													onClick={() => setStatus(row, "hidden")}
-												>
-													<EyeOff aria-hidden="true" /> Ocultar
-												</Button>
-											) : null}
-											{status === "published" ? (
-												<Button
-													type="button"
-													variant="ghost"
-													className="min-h-11"
-													onClick={() => setStatus(row, "pending")}
-												>
-													<RotateCcw aria-hidden="true" /> Volver a pendiente
-												</Button>
-											) : null}
-											{status === "hidden" ? (
-												<Button
-													type="button"
-													variant="destructive"
-													className="min-h-11"
-													onClick={() => setDeleting(row)}
-												>
-													<Trash2 aria-hidden="true" /> Borrar
-												</Button>
-											) : null}
-										</div>
-									</li>
-								))}
-							</ul>
+							<DataTable
+								rows={byStatus[status]}
+								getId={(row) => row.comment_id}
+								label={COMMENT_STATUS_LABELS[status]}
+								searchLabel="Buscar comentario"
+								searchText={(row) =>
+									`${row.name} ${row.job ?? ""} ${row.country} ${row.description}`
+								}
+								empty={null}
+								columns={columnsFor(status)}
+							/>
 						)}
 					</TabsContent>
 				))}
@@ -227,7 +256,7 @@ export const CommentsApp = ({ initial, initialError = null }: Props) => {
 
 			<ConfirmDelete
 				open={deleting !== null}
-				onOpenChange={(open) => !open && setDeleting(null)}
+				onOpenChange={(open) => !open && cancelDelete()}
 				name={deleting?.name ?? ""}
 				consequence="Se borra el comentario de forma definitiva. Si solo quieres que no se vea, déjalo oculto."
 				busy={busy}

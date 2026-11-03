@@ -1,17 +1,19 @@
 import { Trash2 } from "lucide-react";
 import { useId, useMemo, useState } from "react";
 import { ConfirmDelete } from "@/components/ConfirmDelete";
+import { FilterToggle } from "@/components/form/FilterToggle";
+import { SimpleSelect } from "@/components/form/SimpleSelect";
 import { ImageUploader } from "@/components/media/ImageUploader";
 import { MediaGrid } from "@/components/media/MediaGrid";
-import {
-	keyToPath,
-	type MediaListing,
-	type MediaObject,
-} from "@/components/media/mediaTypes";
+import { keyToPath, type MediaListing } from "@/components/media/mediaTypes";
+import { PageControls, usePaged } from "@/components/PageControls";
 import { EmptyState, ErrorState } from "@/components/states";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { useDeleteTarget } from "@/hooks/useDeleteTarget";
+import { useUrlParam } from "@/hooks/useUrlParams";
 import { ApiFailure, api } from "@/lib/apiClient";
-import { cn } from "@/lib/utils";
 import { UPLOAD_USES, type UploadUse } from "@/lib/webp";
 
 interface Props {
@@ -31,10 +33,16 @@ export const MediaLibrary = ({ initial, initialError = null }: Props) => {
 		initial ?? { objects: [], truncated: false },
 	);
 	const [loadError, setLoadError] = useState<string | null>(initialError);
-	const [filter, setFilter] = useState<Filter>("all");
-	const [use, setUse] = useState<UploadUse>("card");
+	// El filtro, el tipo de subida y el modal de borrar viven en la URL (?ver, ?tipo, ?borrar).
+	const [filterRaw, setFilter] = useUrlParam("ver", "all", {
+		resetsPage: true,
+	});
+	const filter: Filter = filterRaw === "unused" ? "unused" : "all";
+	const [useRaw, setUse] = useUrlParam("tipo", "card");
+	const use = (
+		Object.hasOwn(UPLOAD_USES, useRaw) ? useRaw : "card"
+	) as UploadUse;
 	const [notice, setNotice] = useState<string | null>(null);
-	const [deleting, setDeleting] = useState<MediaObject | null>(null);
 	const [busy, setBusy] = useState(false);
 	const uid = useId();
 	const uploadId = `${uid}-subir`;
@@ -46,6 +54,11 @@ export const MediaLibrary = ({ initial, initialError = null }: Props) => {
 		[listing],
 	);
 	const visible = filter === "unused" ? unused : listing.objects;
+	const paged = usePaged(visible);
+	const { deleting, requestDelete, cancelDelete } = useDeleteTarget(
+		listing.objects,
+		(object) => object.key,
+	);
 
 	const reload = async () => {
 		setLoadError(null);
@@ -72,9 +85,9 @@ export const MediaLibrary = ({ initial, initialError = null }: Props) => {
 				...l,
 				objects: l.objects.filter((o) => o.key !== deleting.key),
 			}));
-			setDeleting(null);
+			cancelDelete();
 		} catch (error) {
-			setDeleting(null);
+			cancelDelete();
 			setNotice(
 				error instanceof ApiFailure
 					? error.message
@@ -103,24 +116,21 @@ export const MediaLibrary = ({ initial, initialError = null }: Props) => {
 				</header>
 				<div className="flex min-w-0 flex-col gap-4">
 					<div className="flex max-w-sm flex-col gap-1.5">
-						<label
+						<Label
 							htmlFor={useSelectId}
 							className="text-[0.9375rem] font-medium"
 						>
 							¿Para qué es?
-						</label>
-						<select
+						</Label>
+						<SimpleSelect
 							id={useSelectId}
 							value={use}
-							onChange={(event) => setUse(event.target.value as UploadUse)}
-							className="min-h-11 rounded-lg border border-input bg-background px-3 text-base focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
-						>
-							{Object.entries(UPLOAD_USES).map(([value, spec]) => (
-								<option key={value} value={value}>
-									{spec.label}
-								</option>
-							))}
-						</select>
+							onValueChange={(value) => setUse(value, { push: true })}
+							options={Object.entries(UPLOAD_USES).map(([value, spec]) => ({
+								value,
+								label: spec.label,
+							}))}
+						/>
 					</div>
 					<ImageUploader use={use} onUploaded={() => void reload()} />
 				</div>
@@ -134,39 +144,21 @@ export const MediaLibrary = ({ initial, initialError = null }: Props) => {
 					<h2 id={libraryId} className="font-serif-display text-heading">
 						Biblioteca
 					</h2>
-					<fieldset className="flex min-w-0 gap-1">
-						<legend className="sr-only">Filtrar imágenes</legend>
-						{(
-							[
-								["all", `Todas ${listing.objects.length}`],
-								["unused", `Sin uso ${unused.length}`],
-							] as const
-						).map(([value, text]) => (
-							<button
-								key={value}
-								type="button"
-								aria-pressed={filter === value}
-								onClick={() => setFilter(value)}
-								className={cn(
-									"min-h-11 rounded-md px-3 text-[0.9375rem] font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
-									filter === value
-										? "bg-muted text-foreground"
-										: "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
-								)}
-							>
-								{text}
-							</button>
-						))}
-					</fieldset>
+					<FilterToggle
+						label="Filtrar imágenes"
+						value={filter}
+						onValueChange={(value) => setFilter(value, { push: true })}
+						options={[
+							{ value: "all", label: `Todas ${listing.objects.length}` },
+							{ value: "unused", label: `Sin uso ${unused.length}` },
+						]}
+					/>
 				</div>
 
 				{notice ? (
-					<p
-						role="alert"
-						className="mb-5 rounded-lg border border-destructive/40 bg-destructive/5 px-4 py-3 font-medium text-destructive"
-					>
-						{notice}
-					</p>
+					<Alert variant="destructive" className="mb-5">
+						<AlertDescription>{notice}</AlertDescription>
+					</Alert>
 				) : null}
 
 				{loadError && listing.objects.length === 0 ? (
@@ -188,7 +180,7 @@ export const MediaLibrary = ({ initial, initialError = null }: Props) => {
 				) : (
 					<>
 						<MediaGrid
-							objects={visible}
+							objects={paged.shown}
 							label="Imágenes"
 							action={(object) =>
 								object.usedBy.length === 0 ? (
@@ -197,13 +189,16 @@ export const MediaLibrary = ({ initial, initialError = null }: Props) => {
 										variant="ghost"
 										size="sm"
 										className="min-h-11 px-2"
-										onClick={() => setDeleting(object)}
+										onClick={() => requestDelete(object)}
 									>
 										<Trash2 aria-hidden="true" /> Borrar
 									</Button>
 								) : null
 							}
 						/>
+						<div className="mt-6">
+							<PageControls {...paged} />
+						</div>
 						{listing.truncated ? (
 							<p className="mt-6 text-sm text-muted-foreground">
 								Hay más imágenes de las que se pueden mostrar aquí (se listan
@@ -216,7 +211,7 @@ export const MediaLibrary = ({ initial, initialError = null }: Props) => {
 
 			<ConfirmDelete
 				open={deleting !== null}
-				onOpenChange={(open) => !open && setDeleting(null)}
+				onOpenChange={(open) => !open && cancelDelete()}
 				name={deleting?.key ?? ""}
 				consequence="La imagen se borra de R2 de forma definitiva: no hay papelera. Ningún elemento la usa."
 				busy={busy}

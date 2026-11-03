@@ -1,3 +1,4 @@
+import { type AuditEntry, parseAudit } from "@/lib/activity";
 import {
 	BackendError,
 	callBackend,
@@ -78,6 +79,25 @@ export interface DashboardData {
 	/** Fecha (texto de D1) del ultimo cambio en proyectos, o `null`. */
 	lastEdit: string | null;
 }
+
+/**
+ * Los ultimos cambios del CMS para el Panel. Aparte de `loadDashboard` a proposito:
+ * si el backend aun no tiene el historial, el Panel sigue funcionando sin esta parte.
+ */
+export const loadRecentActivity = async (
+	request: Request,
+	limit = 5,
+	call: Call = callBackend,
+): Promise<AuditEntry[]> => {
+	try {
+		const result = await call<{ data?: unknown }>(`/audit?limit=${limit}`, {
+			accessJwt: jwtOf(request),
+		});
+		return parseAudit(result?.data);
+	} catch {
+		return [];
+	}
+};
 
 /** Numeros del Panel: lo que espera tu atencion. */
 export const loadDashboard = async (

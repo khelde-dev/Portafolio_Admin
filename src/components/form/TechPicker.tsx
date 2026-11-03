@@ -73,14 +73,16 @@ export const TechPicker = ({ name, label, hint }: Props) => {
 						>
 							<Icon name={tech} className="size-5" />
 							{tech}
-							<button
+							<Button
 								type="button"
+								variant="ghost"
+								size="icon"
 								onClick={() => set(selected.filter((t) => t !== tech))}
 								aria-label={`Quitar ${tech}`}
-								className="grid size-8 place-items-center rounded-full hover:bg-muted focus-visible:outline-2 focus-visible:outline-primary"
+								className="size-8 rounded-full"
 							>
 								<X aria-hidden="true" className="size-4" />
-							</button>
+							</Button>
 						</li>
 					))}
 				</ul>

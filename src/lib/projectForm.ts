@@ -3,6 +3,8 @@ import { PROJECT_TEXT_FIELDS, type ProjectRow } from "@/schemas/projects";
 
 /** Valores de un formulario de proyecto (`translations` como MAPA, listo para editar por idioma). */
 export interface ProjectFormValues {
+	/** El `updated_at` leido (solo al editar). */
+	updated_at?: string;
 	slug: string;
 	category: string;
 	status: "draft" | "published";
@@ -45,6 +47,7 @@ export const emptyProject = (): ProjectFormValues => ({
 
 /** Fila del backend -> valores del formulario (nulos pasan a texto vacio). */
 export const rowToValues = (row: ProjectRow): ProjectFormValues => ({
+	updated_at: row.updated_at,
 	slug: row.slug,
 	category: row.category,
 	status: row.status,
@@ -89,6 +92,8 @@ export const duplicateValues = (
 	attempt = 1,
 ): ProjectFormValues => ({
 	...rowToValues(row),
+	// Una copia es un proyecto nuevo: no hereda la version del original.
+	updated_at: undefined,
 	slug: copySlug(row.slug, attempt),
 	status: "draft",
 	featured: false,

@@ -1,14 +1,20 @@
 import { Copy, ExternalLink, Pencil, Plus, Trash2 } from "lucide-react";
 import { useCallback, useId, useMemo, useState } from "react";
 import { ConfirmDelete } from "@/components/ConfirmDelete";
-import { IndexList } from "@/components/IndexList";
+import { type Column, DataTable } from "@/components/DataTable";
+import { FilterToggle } from "@/components/form/FilterToggle";
+import { SimpleSelect } from "@/components/form/SimpleSelect";
 import { LocalTime } from "@/components/LocalTime";
 import { MediaImage } from "@/components/media/MediaImage";
 import { MoveButtons, OrderBar } from "@/components/OrderControls";
 import { StatusBadge } from "@/components/StatusBadge";
 import { EmptyState, ErrorState } from "@/components/states";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { useDeleteTarget } from "@/hooks/useDeleteTarget";
 import { useReorder } from "@/hooks/useReorder";
+import { useUrlParam } from "@/hooks/useUrlParams";
 import { ApiFailure, api } from "@/lib/apiClient";
 import { duplicateValues } from "@/lib/projectForm";
 import { projectUrl } from "@/lib/site";
@@ -45,13 +51,26 @@ export const ProjectsApp = ({
 	const order = useReorder<ProjectRow>(initial ?? [], getId, "projects");
 	const [loadError, setLoadError] = useState<string | null>(initialError);
 	const [notice, setNotice] = useState<string | null>(null);
-	const [filter, setFilter] = useState<Filter>("all");
-	const [category, setCategory] = useState<string>("");
-	const [deleting, setDeleting] = useState<ProjectRow | null>(null);
+	// Los filtros y el modal de borrado viven en la URL (?estado, ?categoria, ?borrar).
+	const [filterRaw, setFilter] = useUrlParam("estado", "all", {
+		resetsPage: true,
+	});
+	const [categoryRaw, setCategory] = useUrlParam("categoria", "", {
+		resetsPage: true,
+	});
+	const filter: Filter =
+		filterRaw === "published" || filterRaw === "draft" ? filterRaw : "all";
+	const category = (CATEGORIES as readonly string[]).includes(categoryRaw)
+		? categoryRaw
+		: "";
 	const [busy, setBusy] = useState(false);
 	const categoryId = useId();
 
 	const { rows, replace } = order;
+	const { deleting, requestDelete, cancelDelete } = useDeleteTarget(
+		rows,
+		getId,
+	);
 
 	const reload = useCallback(async () => {
 		setLoadError(null);
@@ -81,9 +100,9 @@ export const ProjectsApp = ({
 		try {
 			await api.delete(`/api/projects/${deleting.project_id}`);
 			replace(rows.filter((r) => r.project_id !== deleting.project_id));
-			setDeleting(null);
+			cancelDelete();
 		} catch (error) {
-			setDeleting(null);
+			cancelDelete();
 			setNotice(
 				error instanceof ApiFailure ? error.message : "No se pudo borrar.",
 			);
@@ -148,59 +167,152 @@ export const ProjectsApp = ({
 
 	const filters = (
 		<div className="flex flex-wrap items-center gap-2">
-			<fieldset className="flex min-w-0 gap-1">
-				<legend className="sr-only">Estado</legend>
-				{(
-					[
-						["all", "Todos"],
-						["published", "Publicados"],
-						["draft", "Borradores"],
-					] as const
-				).map(([value, text]) => (
-					<button
-						key={value}
-						type="button"
-						aria-pressed={filter === value}
-						onClick={() => setFilter(value)}
-						className={cn(
-							"min-h-11 rounded-md px-3 text-[0.9375rem] font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
-							filter === value
-								? "bg-muted text-foreground"
-								: "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
-						)}
-					>
-						{text}
-					</button>
-				))}
-			</fieldset>
-			<label className="sr-only" htmlFor={categoryId}>
+			<FilterToggle
+				label="Estado"
+				value={filter}
+				onValueChange={(value) => setFilter(value, { push: true })}
+				options={[
+					{ value: "all", label: "Todos" },
+					{ value: "published", label: "Publicados" },
+					{ value: "draft", label: "Borradores" },
+				]}
+			/>
+			<Label className="sr-only" htmlFor={categoryId}>
 				Categoría
-			</label>
-			<select
+			</Label>
+			<SimpleSelect
 				id={categoryId}
 				value={category}
-				onChange={(event) => setCategory(event.target.value)}
-				className="min-h-11 rounded-lg border border-input bg-background px-3 text-[0.9375rem]"
-			>
-				<option value="">Todas las categorías</option>
-				{CATEGORIES.map((value) => (
-					<option key={value} value={value}>
-						{CATEGORY_LABELS[value]}
-					</option>
-				))}
-			</select>
+				onValueChange={(value) => setCategory(value, { push: true })}
+				options={[
+					{ value: "", label: "Todas las categorías" },
+					...CATEGORIES.map((value) => ({
+						value,
+						label: CATEGORY_LABELS[value],
+					})),
+				]}
+				className="w-auto min-w-56"
+			/>
 		</div>
 	);
+
+	const canReorder = filter === "all" && category === "";
+	const columns: Column<ProjectRow>[] = [
+		{
+			id: "image",
+			header: "Imagen",
+			hideHeader: true,
+			className: "w-24",
+			cell: (row) => (
+				<MediaImage
+					mediaKey={row.card_image}
+					loading="lazy"
+					className="size-[4.5rem] rounded-lg border border-border bg-muted object-cover"
+				/>
+			),
+		},
+		{
+			id: "project",
+			header: "Proyecto",
+			className: "min-w-0 max-md:flex-1",
+			cell: (row) => (
+				<div className="min-w-0">
+					<p className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+						<a
+							href={`/proyectos/${row.project_id}`}
+							className="font-serif-display text-heading hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+						>
+							{row.title_default}
+						</a>
+						<StatusBadge
+							tone={row.status === "published" ? "success" : "warning"}
+						>
+							{PROJECT_STATUS_LABELS[row.status]}
+						</StatusBadge>
+						{row.featured ? (
+							<StatusBadge tone="primary">Destacado</StatusBadge>
+						) : null}
+					</p>
+					<p className="eyebrow mt-1.5">
+						/{row.slug}, {CATEGORY_LABELS[row.category]}, editado{" "}
+						<LocalTime value={row.updated_at} />
+					</p>
+				</div>
+			),
+		},
+		{
+			id: "actions",
+			header: "Acciones",
+			hideHeader: true,
+			className: "md:w-px md:whitespace-nowrap max-md:w-full",
+			cell: (row) => {
+				const index = rows.findIndex((r) => r.project_id === row.project_id);
+				return (
+					<div className="flex items-center gap-0.5 max-md:flex-wrap">
+						{canReorder ? (
+							<MoveButtons
+								name={row.title_default}
+								index={index}
+								count={rows.length}
+								onMove={(delta) => order.move(index, delta)}
+							/>
+						) : null}
+						<a
+							href={`/proyectos/${row.project_id}`}
+							className={cn(
+								buttonVariants({ variant: "ghost", size: "icon" }),
+								"size-11",
+							)}
+							aria-label={`Editar ${row.title_default}`}
+						>
+							<Pencil aria-hidden="true" />
+						</a>
+						<Button
+							type="button"
+							variant="ghost"
+							size="icon"
+							className="size-11"
+							onClick={() => void duplicate(row)}
+							aria-label={`Duplicar ${row.title_default}`}
+						>
+							<Copy aria-hidden="true" />
+						</Button>
+						{row.status === "published" ? (
+							<a
+								href={projectUrl(siteUrl, row.slug)}
+								target="_blank"
+								rel="noopener noreferrer"
+								className={cn(
+									buttonVariants({ variant: "ghost", size: "icon" }),
+									"size-11",
+								)}
+								aria-label={`Ver ${row.title_default} en el sitio`}
+							>
+								<ExternalLink aria-hidden="true" />
+							</a>
+						) : null}
+						<Button
+							type="button"
+							variant="ghost"
+							size="icon"
+							className="size-11 text-destructive"
+							onClick={() => requestDelete(row)}
+							aria-label={`Borrar ${row.title_default}`}
+						>
+							<Trash2 aria-hidden="true" />
+						</Button>
+					</div>
+				);
+			},
+		},
+	];
 
 	return (
 		<>
 			{notice ? (
-				<p
-					role="alert"
-					className="mb-5 rounded-lg border border-destructive/40 bg-destructive/5 px-4 py-3 font-medium text-destructive"
-				>
-					{notice}
-				</p>
+				<Alert variant="destructive" className="mb-5">
+					<AlertDescription>{notice}</AlertDescription>
+				</Alert>
 			) : null}
 
 			<OrderBar
@@ -211,7 +323,7 @@ export const ProjectsApp = ({
 				onDiscard={order.discard}
 			/>
 
-			<IndexList
+			<DataTable
 				rows={visible}
 				getId={getId}
 				label="Proyectos"
@@ -221,94 +333,7 @@ export const ProjectsApp = ({
 				}
 				filters={filters}
 				empty={null}
-				renderRow={(row) => {
-					const index = rows.findIndex((r) => r.project_id === row.project_id);
-					return (
-						<div className="grid items-center gap-x-4 gap-y-3 px-1 py-4 md:grid-cols-[4.5rem_minmax(0,1fr)_auto]">
-							<MediaImage
-								mediaKey={row.card_image}
-								loading="lazy"
-								className="size-[4.5rem] rounded-lg border border-border bg-muted object-cover"
-							/>
-							<div className="min-w-0">
-								<p className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
-									<a
-										href={`/proyectos/${row.project_id}`}
-										className="font-serif-display text-heading hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-									>
-										{row.title_default}
-									</a>
-									<StatusBadge
-										tone={row.status === "published" ? "success" : "warning"}
-									>
-										{PROJECT_STATUS_LABELS[row.status]}
-									</StatusBadge>
-									{row.featured ? (
-										<StatusBadge tone="primary">Destacado</StatusBadge>
-									) : null}
-								</p>
-								<p className="eyebrow mt-1.5">
-									/{row.slug}, {CATEGORY_LABELS[row.category]}, editado{" "}
-									<LocalTime value={row.updated_at} />
-								</p>
-							</div>
-							<div className="flex flex-wrap items-center gap-0.5">
-								{filter === "all" && category === "" ? (
-									<MoveButtons
-										name={row.title_default}
-										index={index}
-										count={rows.length}
-										onMove={(delta) => order.move(index, delta)}
-									/>
-								) : null}
-								<a
-									href={`/proyectos/${row.project_id}`}
-									className={cn(
-										buttonVariants({ variant: "ghost", size: "icon" }),
-										"size-11",
-									)}
-									aria-label={`Editar ${row.title_default}`}
-								>
-									<Pencil aria-hidden="true" />
-								</a>
-								<Button
-									type="button"
-									variant="ghost"
-									size="icon"
-									className="size-11"
-									onClick={() => void duplicate(row)}
-									aria-label={`Duplicar ${row.title_default}`}
-								>
-									<Copy aria-hidden="true" />
-								</Button>
-								{row.status === "published" ? (
-									<a
-										href={projectUrl(siteUrl, row.slug)}
-										target="_blank"
-										rel="noopener noreferrer"
-										className={cn(
-											buttonVariants({ variant: "ghost", size: "icon" }),
-											"size-11",
-										)}
-										aria-label={`Ver ${row.title_default} en el sitio`}
-									>
-										<ExternalLink aria-hidden="true" />
-									</a>
-								) : null}
-								<Button
-									type="button"
-									variant="ghost"
-									size="icon"
-									className="size-11 text-destructive"
-									onClick={() => setDeleting(row)}
-									aria-label={`Borrar ${row.title_default}`}
-								>
-									<Trash2 aria-hidden="true" />
-								</Button>
-							</div>
-						</div>
-					);
-				}}
+				columns={columns}
 			/>
 			{filter !== "all" || category !== "" ? (
 				<p className="mt-3 text-sm text-muted-foreground">
@@ -319,7 +344,7 @@ export const ProjectsApp = ({
 
 			<ConfirmDelete
 				open={deleting !== null}
-				onOpenChange={(open) => !open && setDeleting(null)}
+				onOpenChange={(open) => !open && cancelDelete()}
 				name={deleting?.title_default ?? ""}
 				consequence="Se borra el proyecto y sus textos en los tres idiomas. Sus imágenes quedan en la biblioteca de medios. No se puede deshacer."
 				busy={busy}
