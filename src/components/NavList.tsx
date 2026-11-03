@@ -11,6 +11,7 @@ import {
 	LayoutDashboard,
 	type LucideIcon,
 	MessageSquare,
+	Type,
 	UserRound,
 	Wrench,
 } from "lucide-react";
@@ -28,6 +29,7 @@ const ICONS: Record<NavIcon, LucideIcon> = {
 	about: UserRound,
 	media: Images,
 	contact: AtSign,
+	copy: Type,
 	activity: History,
 	status: HeartPulse,
 	account: CircleUser,
