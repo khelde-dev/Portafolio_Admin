@@ -14,17 +14,20 @@ const { title } = Astro.props;
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<meta name="robots" content="noindex, nofollow" />
+		<meta name="color-scheme" content="light dark" />
 		<title>{title}</title>
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<script is:inline>
+			// Tema antes del primer pintado (sin parpadeo). Misma logica que
+			// src/lib/theme.ts: "light"/"dark" guardado, o el del sistema.
 			(function () {
+				var dark = window.matchMedia("(prefers-color-scheme: dark)").matches;
 				try {
 					var stored = localStorage.getItem("theme");
-					var dark = stored
-						? stored === "dark"
-						: window.matchMedia("(prefers-color-scheme: dark)").matches;
-					document.documentElement.classList.toggle("dark", dark);
+					if (stored === "light" || stored === "dark") dark = stored === "dark";
 				} catch (_) {}
+				document.documentElement.classList.toggle("dark", dark);
+				document.documentElement.style.colorScheme = dark ? "dark" : "light";
 			})();
 		</script>
 	</head>
