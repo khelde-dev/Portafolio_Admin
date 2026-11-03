@@ -2,10 +2,15 @@
 import { LocalTime } from "@/components/LocalTime";
 import PageHeader from "@/components/PageHeader.astro";
 import AdminLayout from "@/layouts/AdminLayout.astro";
+import { describeEntry } from "@/lib/activity";
 import { NAV } from "@/lib/nav";
-import { loadDashboard } from "@/server/data";
+import { loadDashboard, loadRecentActivity } from "@/server/data";
 
 const { data, error } = await loadDashboard(Astro.request);
+const recent = (await loadRecentActivity(Astro.request)).map((entry) => ({
+	entry,
+	line: describeEntry(entry),
+}));
 
 // Lo que espera atencion: un renglon por tema, con el numero grande en serif.
 const attention = data
@@ -75,7 +80,7 @@ const sections = NAV.filter(
 					</ul>
 					{allClear ? <p class="mt-4 text-muted-foreground">No hay nada pendiente.</p> : null}
 					{
-						data?.lastEdit ? (
+						recent.length === 0 && data?.lastEdit ? (
 							<p class="eyebrow mt-4">
 								Último cambio en proyectos: <LocalTime client:load value={data.lastEdit} />
 							</p>
@@ -85,6 +90,37 @@ const sections = NAV.filter(
 			)
 		}
 	</section>
+
+	{
+		recent.length > 0 ? (
+			<section aria-labelledby="ultimos" class="mb-12">
+				<div class="mb-3 flex items-baseline justify-between gap-4">
+					<h2 id="ultimos" class="eyebrow">Últimos cambios</h2>
+					<a href="/actividad" class="text-sm underline underline-offset-4 hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+						Ver toda la actividad
+					</a>
+				</div>
+				<ol class="divide-y divide-border border-y border-border">
+					{recent.map(({ entry, line }) => (
+						<li class="flex flex-wrap items-baseline gap-x-4 gap-y-1 px-1 py-3">
+							<LocalTime client:load value={entry.at} className="eyebrow w-44 shrink-0" />
+							<p class="min-w-0 flex-1 break-words">
+								<span class="font-medium">{line.verb}</span>{" "}
+								{line.href ? (
+									<a href={line.href} class="underline decoration-border underline-offset-4 hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+										{line.label}
+									</a>
+								) : (
+									line.label
+								)}
+								{line.summary ? <span class="text-muted-foreground">{` «${line.summary}»`}</span> : null}
+							</p>
+						</li>
+					))}
+				</ol>
+			</section>
+		) : null
+	}
 
 	<div class="flex flex-col gap-10">
 		{
