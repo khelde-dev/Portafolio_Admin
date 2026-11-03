@@ -21,6 +21,8 @@ export class ApiFailure extends Error {
 		message: string,
 		readonly issues: ServerIssue[] = [],
 		readonly usedBy: ImageUsage[] = [],
+		/** El formulario ya no esta al dia: otra edicion guardo primero. */
+		readonly stale = false,
 	) {
 		super(message);
 		this.name = "ApiFailure";
@@ -62,6 +64,7 @@ export const apiRequest = async <T = unknown>(
 		message?: string;
 		errors?: ServerIssue[];
 		usedBy?: ImageUsage[];
+		stale?: boolean;
 	} | null = null;
 	try {
 		payload = await response.json();
@@ -75,6 +78,7 @@ export const apiRequest = async <T = unknown>(
 			payload?.message ?? "No se pudo completar la operación.",
 			Array.isArray(payload?.errors) ? payload.errors : [],
 			Array.isArray(payload?.usedBy) ? payload.usedBy : [],
+			payload?.stale === true,
 		);
 	}
 	return (payload?.data ?? null) as T;

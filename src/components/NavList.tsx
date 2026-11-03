@@ -5,6 +5,7 @@ import {
 	FolderKanban,
 	GraduationCap,
 	HeartPulse,
+	History,
 	Images,
 	Inbox,
 	LayoutDashboard,
@@ -27,6 +28,7 @@ const ICONS: Record<NavIcon, LucideIcon> = {
 	about: UserRound,
 	media: Images,
 	contact: AtSign,
+	activity: History,
 	status: HeartPulse,
 	account: CircleUser,
 };

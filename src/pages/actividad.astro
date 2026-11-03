@@ -1,0 +1,141 @@
+---
+import PageHeader from "@/components/PageHeader.astro";
+import { buttonVariants } from "@/components/ui/button";
+import AdminLayout from "@/layouts/AdminLayout.astro";
+import {
+	type AuditEntry,
+	describeEntry,
+	isKnownResource,
+	parseAudit,
+	RESOURCE_OPTIONS,
+} from "@/lib/activity";
+import { parseD1Date } from "@/lib/format";
+import { cn } from "@/lib/utils";
+import { loadList } from "@/server/data";
+
+// Los ultimos 1 000 cambios que conserva el backend (solo lectura).
+const { data, error } = await loadList<unknown>(
+	Astro.request,
+	"/audit?limit=1000",
+);
+const all: AuditEntry[] = parseAudit(data);
+
+const requested = Astro.url.searchParams.get("recurso");
+const resource = isKnownResource(requested) ? requested : null;
+const entries = resource ? all.filter((e) => e.resource === resource) : all;
+
+const DOT: Record<AuditEntry["action"], string> = {
+	create: "bg-primary",
+	update: "bg-muted-foreground",
+	delete: "bg-destructive",
+};
+
+// Sin JS la hora sale en UTC; el script de abajo la pasa a la zona del navegador.
+const utc = (value: string) => {
+	const date = parseD1Date(value);
+	return date
+		? `${date.toISOString().slice(0, 16).replace("T", " ")} UTC`
+		: "—";
+};
+---
+
+<AdminLayout title="Actividad" activeId="actividad" crumbs={[{ label: "Actividad" }]}>
+	<PageHeader
+		title="Actividad"
+		description="Lo que se creó, editó o borró desde el panel, con el correo de quien lo hizo. Se conservan los últimos 1 000 cambios."
+	/>
+	{
+		error ? (
+			<p role="alert" class="rounded-lg border border-destructive/40 bg-destructive/5 px-4 py-3 font-medium text-destructive">
+				{error} <a class="underline underline-offset-4" href="/estado">Ver estado</a>
+			</p>
+		) : (
+			<>
+				<form method="get" class="mb-6 flex flex-wrap items-end gap-3">
+					<div class="flex flex-col gap-1.5">
+						<label for="recurso" class="text-[0.9375rem] font-medium">Qué cambió</label>
+						<select
+							id="recurso"
+							name="recurso"
+							class="min-h-11 min-w-56 rounded-lg border border-input bg-background px-3 text-base focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+						>
+							<option value="" selected={!resource}>Todo</option>
+							{RESOURCE_OPTIONS.map((o) => (
+								<option value={o.value} selected={o.value === resource}>
+									{o.label}
+								</option>
+							))}
+						</select>
+					</div>
+					<button type="submit" class={cn(buttonVariants({ variant: "outline" }), "min-h-11")}>Filtrar</button>
+					{resource ? (
+						<a href="/actividad" class="min-h-11 content-center text-sm underline underline-offset-4">
+							Quitar el filtro
+						</a>
+					) : null}
+				</form>
+
+				<p class="eyebrow mb-3" aria-live="polite">
+					{entries.length === 1 ? "1 cambio" : `${entries.length} cambios`}
+				</p>
+
+				{entries.length === 0 ? (
+					<div class="rounded-lg border border-dashed border-border px-6 py-12 text-center">
+						<p class="font-serif-display text-heading">
+							{resource ? "Sin cambios de este tipo" : "Todavía no hay cambios"}
+						</p>
+						<p class="mt-2 text-muted-foreground">
+							{resource
+								? "Quita el filtro para ver todo."
+								: "Aparecerán aquí cuando guardes algo desde el panel."}
+						</p>
+					</div>
+				) : (
+					<ol class="divide-y divide-border border-y border-border">
+						{entries.map((entry) => {
+							const line = describeEntry(entry);
+							return (
+								<li class="grid items-baseline gap-x-6 gap-y-1 px-1 py-4 md:grid-cols-[11rem_minmax(0,1fr)_auto]">
+									<time
+										data-local
+										datetime={parseD1Date(entry.at)?.toISOString()}
+										class="eyebrow"
+									>
+										{utc(entry.at)}
+									</time>
+									<p class="min-w-0 break-words">
+										<span class="inline-flex items-center gap-2 font-medium">
+											<span aria-hidden="true" class={`size-2 rounded-full ${DOT[entry.action]}`} />
+											{line.verb}
+										</span>{" "}
+										{line.href ? (
+											<a
+												href={line.href}
+												class="underline decoration-border underline-offset-4 hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+											>
+												{line.label}
+											</a>
+										) : (
+											line.label
+										)}
+										{line.summary ? <span class="text-muted-foreground">{` «${line.summary}»`}</span> : null}
+									</p>
+									<p class="eyebrow break-all md:text-right">{entry.admin_email}</p>
+								</li>
+							);
+						})}
+					</ol>
+				)}
+			</>
+		)
+	}
+</AdminLayout>
+
+<script>
+	import { formatDateTime, parseD1Date } from "@/lib/format";
+
+	for (const el of document.querySelectorAll<HTMLTimeElement>("time[data-local]")) {
+		const date = parseD1Date(el.getAttribute("datetime"));
+		if (date) el.textContent = formatDateTime(date);
+	}
+</script>

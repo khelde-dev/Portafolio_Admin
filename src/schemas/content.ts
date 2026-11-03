@@ -17,6 +17,8 @@ export const EXPERIENCE_TEXT_FIELDS = {
 } as const;
 
 export const experienceSchema = z.object({
+	// El `updated_at` que leyo el formulario: el backend responde 409 si la fila ya cambio.
+	updated_at: z.string().max(40).optional(),
 	sort_order: sortOrder,
 	work_default: z
 		.string()
@@ -64,6 +66,8 @@ export const EDUCATION_TEXT_FIELDS = {
 } as const;
 
 export const educationSchema = z.object({
+	// El `updated_at` que leyo el formulario: el backend responde 409 si la fila ya cambio.
+	updated_at: z.string().max(40).optional(),
 	sort_order: sortOrder,
 	institution_default: requiredText(
 		"La institución",
@@ -100,6 +104,8 @@ export interface EducationRow {
 export const SKILL_TEXT_FIELDS = { title: 100 } as const;
 
 export const skillSchema = z.object({
+	// El `updated_at` que leyo el formulario: el backend responde 409 si la fila ya cambio.
+	updated_at: z.string().max(40).optional(),
 	sort_order: sortOrder,
 	title_default: requiredText("El título", SKILL_TEXT_FIELDS.title),
 	images_topics: topics,
@@ -125,6 +131,8 @@ export const ABOUT_TEXT_FIELDS = {
 } as const;
 
 export const aboutSchema = z.object({
+	// El `updated_at` que leyo el formulario: el backend responde 409 si la fila ya cambio.
+	updated_at: z.string().max(40).optional(),
 	image: r2Key("La imagen"),
 	title_card_default: requiredText(
 		"El título de la tarjeta",

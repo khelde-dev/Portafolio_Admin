@@ -96,7 +96,7 @@ describe("WhatsApp", () => {
 });
 
 describe("valores iniciales", () => {
-	it("sin fila arranca vacio; con fila copia solo los cinco datos", () => {
+	it("sin fila arranca vacio; con fila copia los cinco datos y su version", () => {
 		expect(contactValues(null)).toEqual({
 			github_url: "",
 			linkedin_url: "",
@@ -110,7 +110,10 @@ describe("valores iniciales", () => {
 			created_at: "2026-01-01 00:00:00",
 			updated_at: "2026-01-01 00:00:00",
 		};
-		expect(contactValues(row)).toEqual(VALID);
+		expect(contactValues(row)).toEqual({
+			...VALID,
+			updated_at: "2026-01-01 00:00:00",
+		});
 	});
 });
 

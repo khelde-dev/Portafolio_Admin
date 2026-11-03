@@ -17,7 +17,12 @@ import {
  * `null` (un <input> controlado no lo admite): lo ausente es "". El orden
  * (`sort_order`) se conserva de la fila; uno nuevo entra al final de la lista.
  */
-export interface ExperienceValues {
+/** El `updated_at` leido (solo al editar): se manda de vuelta para detectar otra edicion. */
+interface WithVersion {
+	updated_at?: string;
+}
+
+export interface ExperienceValues extends WithVersion {
 	sort_order: number;
 	work_default: string;
 	title_default: string;
@@ -45,6 +50,7 @@ export const emptyExperience = (): ExperienceValues => ({
 });
 
 export const experienceValues = (row: ExperienceRow): ExperienceValues => ({
+	updated_at: row.updated_at,
 	sort_order: row.sort_order,
 	work_default: row.work_default ?? "",
 	title_default: row.title_default,
@@ -60,7 +66,7 @@ export const experienceValues = (row: ExperienceRow): ExperienceValues => ({
 	),
 });
 
-export interface EducationValues {
+export interface EducationValues extends WithVersion {
 	sort_order: number;
 	institution_default: string;
 	subtitle_default: string;
@@ -81,6 +87,7 @@ export const emptyEducation = (): EducationValues => ({
 });
 
 export const educationValues = (row: EducationRow): EducationValues => ({
+	updated_at: row.updated_at,
 	sort_order: row.sort_order,
 	institution_default: row.institution_default,
 	subtitle_default: row.subtitle_default,
@@ -93,7 +100,7 @@ export const educationValues = (row: EducationRow): EducationValues => ({
 	),
 });
 
-export interface SkillValues {
+export interface SkillValues extends WithVersion {
 	sort_order: number;
 	title_default: string;
 	images_topics: string[];
@@ -108,6 +115,7 @@ export const emptySkill = (): SkillValues => ({
 });
 
 export const skillValues = (row: SkillRow): SkillValues => ({
+	updated_at: row.updated_at,
 	sort_order: row.sort_order,
 	title_default: row.title_default,
 	images_topics: [...(row.images_topics ?? [])],
@@ -117,7 +125,7 @@ export const skillValues = (row: SkillRow): SkillValues => ({
 	),
 });
 
-export interface AboutValues {
+export interface AboutValues extends WithVersion {
 	image: string;
 	title_card_default: string;
 	subtitle_default: string;
@@ -127,6 +135,7 @@ export interface AboutValues {
 
 /** `about` es una sola fila y puede no existir todavia: entonces el formulario arranca vacio. */
 export const aboutValues = (row: AboutRow | null | undefined): AboutValues => ({
+	...(row ? { updated_at: row.updated_at } : {}),
 	image: row?.image ?? "",
 	title_card_default: row?.title_card_default ?? "",
 	subtitle_default: row?.subtitle_default ?? "",
@@ -137,7 +146,7 @@ export const aboutValues = (row: AboutRow | null | undefined): AboutValues => ({
 	),
 });
 
-export interface ContactValues {
+export interface ContactValues extends WithVersion {
 	github_url: string;
 	linkedin_url: string;
 	linkedin_name: string;
@@ -149,6 +158,7 @@ export interface ContactValues {
 export const contactValues = (
 	row: ContactRow | null | undefined,
 ): ContactValues => ({
+	...(row ? { updated_at: row.updated_at } : {}),
 	github_url: row?.github_url ?? "",
 	linkedin_url: row?.linkedin_url ?? "",
 	linkedin_name: row?.linkedin_name ?? "",

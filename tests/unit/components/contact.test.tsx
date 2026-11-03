@@ -43,9 +43,10 @@ describe("ContactForm", () => {
 		expect(put).toHaveBeenCalledWith("/api/contact-info", {
 			...Object.fromEntries(
 				Object.entries(row).filter(
-					([k]) => !k.endsWith("_at") && k !== "contact_id",
+					([k]) => k !== "created_at" && k !== "contact_id",
 				),
 			),
+			// Con su version leida: si otra pestana guardo antes, el backend da 409.
 			email: "nuevo@example.com",
 		});
 	});

@@ -52,18 +52,32 @@ export function ResourceForm<TValues extends FieldValues>({
 		formState: { isDirty, isSubmitting, errors },
 	} = form;
 	const [formError, setFormError] = useState<string | null>(null);
+	// Otra edicion guardo primero: el formulario ya no esta al dia.
+	const [stale, setStale] = useState(false);
 
 	const submit = useCallback(
 		async (payload: unknown) => {
 			setFormError(null);
+			setStale(false);
 			try {
 				const result = await onSubmit(payload as Record<string, unknown>);
 				toast.success(successMessage);
+				// El backend devuelve la fila con su `updated_at` nuevo: con ese se guarda la
+				// siguiente vez, o el segundo guardado de esta misma pestana daria 409.
+				const next = (result as { updated_at?: unknown } | null)?.updated_at;
+				if (typeof next === "string") {
+					form.setValue("updated_at" as never, next as never);
+				}
 				form.reset(form.getValues());
 				onSaved?.(result);
 			} catch (error) {
 				if (!(error instanceof ApiFailure)) {
 					setFormError("No se pudo guardar. Intenta de nuevo.");
+					return;
+				}
+				if (error.stale) {
+					setStale(true);
+					setFormError(error.message);
 					return;
 				}
 				const sent = (payload as { translations?: { locale: string }[] })
@@ -115,12 +129,22 @@ export function ResourceForm<TValues extends FieldValues>({
 		<FormProvider {...form}>
 			<form onSubmit={handleSave} noValidate className="flex flex-col gap-10">
 				{formError ? (
-					<p
+					<div
 						role="alert"
-						className="rounded-lg border border-destructive/40 bg-destructive/5 px-4 py-3 font-medium text-destructive"
+						className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-destructive/40 bg-destructive/5 px-4 py-3 font-medium text-destructive"
 					>
-						{formError}
-					</p>
+						<p className="min-w-0 flex-1">{formError}</p>
+						{stale ? (
+							<Button
+								type="button"
+								variant="outline"
+								className="min-h-11"
+								onClick={() => window.location.reload()}
+							>
+								Recargar
+							</Button>
+						) : null}
+					</div>
 				) : null}
 
 				{children}
