@@ -57,6 +57,14 @@ export default defineConfig({
 				access: "public",
 				default: "",
 			}),
+			// Secreto opcional: correos permitidos (separados por coma). Defensa en
+			// profundidad por si la politica de Access se relaja. Va como secreto y
+			// no en wrangler.jsonc porque el repositorio es publico.
+			ADMIN_EMAILS: envField.string({
+				context: "server",
+				access: "secret",
+				optional: true,
+			}),
 
 			// --- Cliente (se incrustan al compilar: son variables de BUILD). ----
 			// Origen publico del bucket R2 (imagenes). Ver src/lib/media.ts.
@@ -80,5 +88,9 @@ export default defineConfig({
 	output: "server",
 	// Vitest carga esta config con getViteConfig(); el plugin del adaptador
 	// levantaria un workerd por cada corrida de pruebas.
-	adapter: process.env.VITEST ? undefined : cloudflare(),
+	// `passthrough`: el admin no usa <Image>; sin esto el adaptador agrega un
+	// binding IMAGES (Cloudflare Images) que tiene cuota gratuita y luego cobro.
+	adapter: process.env.VITEST
+		? undefined
+		: cloudflare({ imageService: "passthrough" }),
 });
