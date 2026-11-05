@@ -139,7 +139,7 @@ export const ProjectForm = ({ initial }: Props) => {
 				<ToggleField
 					name="featured"
 					label="Destacado"
-					hint="Aparece en la franja de destacados de la portada y primero dentro de su categoría. Apágalo y vuelve al orden normal."
+					hint="Aparece primero dentro de su categoría y con la etiqueta «Destacado» en su tarjeta. Si hay más de 6 en la categoría, los destacados son los que quedan en el riel."
 				/>
 				<ToggleField
 					name="fork"
