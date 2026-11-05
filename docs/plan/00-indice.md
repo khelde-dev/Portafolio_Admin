@@ -7,7 +7,7 @@ suposiciones; donde algo no se pudo comprobar se marca como **[verificar]**.
 
 | Repo | Versión leída | Papel |
 |---|---|---|
-| `Portafolio_Admin` (este) | 0.5.0 | el CMS, solo para su dueño |
+| `Portafolio_Admin` (este) | 0.6.0 | el CMS, solo para su dueño |
 | `Backend_Portafolio` | 0.12.0 | API de contenido: Hono + D1 + R2 (única que escribe datos) |
 | `Portafolio` | 3.14.0 | sitio público; lee del backend, sin base propia |
 
