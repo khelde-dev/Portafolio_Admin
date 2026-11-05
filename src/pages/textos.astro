@@ -1,8 +1,10 @@
 ---
 import PageHeader from "@/components/PageHeader.astro";
+import { CvManager } from "@/components/site/CvManager";
 import { SiteCopyForm } from "@/components/site/SiteCopyForm";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import AdminLayout from "@/layouts/AdminLayout.astro";
+import type { CvInfo } from "@/lib/apiClient";
 import type { SiteCopyRow } from "@/schemas/siteCopy";
 import { loadList } from "@/server/data";
 
@@ -11,6 +13,8 @@ const { data, error } = await loadList<SiteCopyRow | null>(
 	Astro.request,
 	"/site-copy/admin",
 );
+// El PDF del curriculum vive aparte (`/cv`); si falla, solo esa seccion queda sin dato.
+const cv = await loadList<CvInfo | null>(Astro.request, "/cv");
 ---
 
 <AdminLayout title="Textos del sitio" activeId="textos" crumbs={[{ label: "Textos del sitio" }]}>
@@ -27,6 +31,9 @@ const { data, error } = await loadList<SiteCopyRow | null>(
 			</Alert>
 		) : (
 			<SiteCopyForm client:load initial={data} />
+			<div class="mt-10">
+				<CvManager client:load initial={cv.data} canUpload={Boolean(data)} unavailable={cv.error} />
+			</div>
 		)
 	}
 </AdminLayout>

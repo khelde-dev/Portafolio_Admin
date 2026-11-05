@@ -158,3 +158,13 @@ líneas: los cubre Playwright.
   Access.
 - **CSP completo** (`script-src` / `style-src`): se activa después de
   verificarlo en un navegador, igual que en el portafolio.
+
+## Currículum (PDF)
+
+La pantalla **Textos del sitio** tiene una sección *Currículum* (`src/components/site/CvManager.tsx`):
+sube **un solo PDF** (máx. 5 MB) a `POST /api/cv`, lo reemplaza o lo quita. La ruta
+`src/pages/api/cv.ts` (lógica en `src/server/cvProxy.ts`) valida origen, tipo, tamaño y la
+firma `%PDF-` antes de reenviarlo al backend, que lo guarda en R2 bajo `cv/` y deja su clave
+en `site_copy.cv_pdf_key`. El sitio público lo abre desde el botón «Ver CV» de la portada.
+No aparece en Medios (la biblioteca es solo de imágenes). Para subirlo, la ficha de Textos
+tiene que estar guardada al menos una vez.

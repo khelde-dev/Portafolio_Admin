@@ -131,3 +131,46 @@ export const apiUpload = async (
 	}
 	return payload.data;
 };
+
+/** El curriculum cargado (`GET /api/cv`); `null` si todavia no hay uno. */
+export interface CvInfo {
+	key: string;
+	url: string | null;
+	size: number | null;
+	uploaded: string | null;
+}
+
+/**
+ * Sube el PDF del curriculum: cuerpo BINARIO con `Content-Type: application/pdf`.
+ * El servidor elige la clave, borra el PDF anterior y devuelve el nuevo.
+ */
+export const apiUploadCv = async (
+	blob: Blob,
+	fetcher: typeof fetch = fetch,
+): Promise<CvInfo> => {
+	let response: Response;
+	try {
+		response = await fetcher("/api/cv", {
+			method: "POST",
+			headers: {
+				Accept: "application/json",
+				"Content-Type": "application/pdf",
+			},
+			body: blob,
+			credentials: "same-origin",
+		});
+	} catch {
+		throw new ApiFailure(0, SESSION_HINT);
+	}
+	const payload = (await response.json().catch(() => null)) as {
+		data?: Pick<CvInfo, "key" | "url" | "size">;
+		message?: string;
+	} | null;
+	if (!response.ok || !payload?.data) {
+		throw new ApiFailure(
+			response.status,
+			payload?.message ?? "No se pudo subir el currículum.",
+		);
+	}
+	return { ...payload.data, uploaded: new Date().toISOString() };
+};
