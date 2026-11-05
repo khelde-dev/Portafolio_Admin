@@ -1,4 +1,5 @@
 ---
+import { ArrowLeft } from "lucide-react";
 import { MobileNav } from "@/components/MobileNav";
 import { NavList } from "@/components/NavList";
 import { ThemeMenu } from "@/components/ThemeMenu";
@@ -11,8 +12,10 @@ import {
 	BreadcrumbPage,
 	BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
+import { buttonVariants } from "@/components/ui/button";
 import Layout from "@/layouts/Layout.astro";
-import { findNavItem } from "@/lib/nav";
+import { backTarget, findNavItem } from "@/lib/nav";
+import { cn } from "@/lib/utils";
 import { loadBadges } from "@/server/data";
 
 interface Crumb {
@@ -46,6 +49,8 @@ const trail: Crumb[] = [
 		: []),
 	...crumbs,
 ];
+// "Volver": el nivel de arriba; en una pantalla de modulo no hay a donde volver.
+const parent = backTarget(trail);
 const email = Astro.locals.user?.email ?? "";
 ---
 
@@ -110,6 +115,20 @@ const email = Astro.locals.user?.email ?? "";
 			</header>
 
 			<main id="contenido" class="mx-auto w-full max-w-5xl flex-1 px-4 py-8 sm:px-6 lg:py-10">
+				{
+					parent ? (
+						<a
+							href={parent.href}
+							class={cn(
+								buttonVariants({ variant: "ghost" }),
+								"-ml-3 mb-4 min-h-11 gap-2 px-3 text-muted-foreground hover:text-foreground",
+							)}
+						>
+							<ArrowLeft aria-hidden="true" className="size-4" />
+							Volver a {parent.label}
+						</a>
+					) : null
+				}
 				<slot />
 			</main>
 		</div>

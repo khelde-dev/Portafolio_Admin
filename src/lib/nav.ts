@@ -108,3 +108,15 @@ export const NAV: NavGroup[] = [
 
 export const findNavItem = (id: string): NavItem | undefined =>
 	NAV.flatMap((group) => group.items).find((item) => item.id === id);
+
+/**
+ * A donde lleva "Volver": la ultima miga con enlace ANTES de la pagina actual. En una
+ * pantalla de modulo (la lista) no hay nivel de arriba y devuelve `undefined`.
+ */
+export const backTarget = <T extends { label: string; href?: string }>(
+	trail: readonly T[],
+): (T & { href: string }) | undefined =>
+	[...trail]
+		.slice(0, -1)
+		.reverse()
+		.find((crumb): crumb is T & { href: string } => Boolean(crumb.href));

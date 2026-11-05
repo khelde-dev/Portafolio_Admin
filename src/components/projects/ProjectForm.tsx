@@ -139,7 +139,7 @@ export const ProjectForm = ({ initial }: Props) => {
 				<ToggleField
 					name="featured"
 					label="Destacado"
-					hint="Se muestra primero y con más peso en el sitio."
+					hint="Aparece primero dentro de su categoría y con la etiqueta «Destacado» en su tarjeta. Si hay más de 6 en la categoría, los destacados son los que quedan en el riel."
 				/>
 				<ToggleField
 					name="fork"
@@ -159,7 +159,7 @@ export const ProjectForm = ({ initial }: Props) => {
 					name="gallery"
 					label="Galería"
 					use="gallery"
-					hint="Se muestra en la página del proyecto."
+					hint="Fotos extra del proyecto: se ven como carrusel en su página, después de la imagen de la tarjeta, en este orden."
 				/>
 			</FormSection>
 

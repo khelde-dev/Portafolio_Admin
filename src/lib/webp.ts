@@ -13,8 +13,8 @@ export const UPLOAD_USES = {
 	card: {
 		folder: "projects",
 		label: "Tarjeta de proyecto",
-		maxSide: 1280,
-		maxBytes: 400 * 1024,
+		maxSide: 1600,
+		maxBytes: 500 * 1024,
 	},
 	gallery: {
 		folder: "projects",
