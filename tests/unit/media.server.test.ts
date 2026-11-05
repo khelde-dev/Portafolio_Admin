@@ -278,16 +278,16 @@ describe("conversion a WebP", () => {
 		const browser = api([100 * 1024]);
 		const result = await convertToWebp(png(2_000_000), "card", browser);
 		expect(result).toMatchObject({
-			width: 1280,
-			height: 640,
+			width: 1600,
+			height: 800,
 			originalBytes: 2_000_000,
 			quality: 0.82,
 		});
 		expect(result.blob.type).toBe("image/webp");
 		expect(browser.encode).toHaveBeenCalledWith(
 			expect.anything(),
-			1280,
-			640,
+			1600,
+			800,
 			0.82,
 		);
 		const decoded = await browser.decode.mock.results[0].value;
@@ -295,7 +295,7 @@ describe("conversion a WebP", () => {
 	});
 
 	it("baja la calidad hasta que cabe en el tope de su uso", async () => {
-		const browser = api([500 * 1024, 450 * 1024, 300 * 1024]);
+		const browser = api([600 * 1024, 550 * 1024, 300 * 1024]);
 		const result = await convertToWebp(png(), "card", browser);
 		expect(result.quality).toBe(0.62);
 		expect(browser.encode).toHaveBeenCalledTimes(3);
@@ -304,7 +304,7 @@ describe("conversion a WebP", () => {
 	it("si ni la calidad mas baja cabe, dice el peso y el tope", async () => {
 		const browser = api([900_000, 800_000, 700_000, 600_000]);
 		await expect(convertToWebp(png(), "card", browser)).rejects.toThrow(
-			/tope es 400 KB/,
+			/tope es 500 KB/,
 		);
 	});
 
