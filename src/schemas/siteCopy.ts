@@ -51,6 +51,8 @@ export interface SiteCopyRow {
 	hero_lead_default: string;
 	manifesto_text_default: string;
 	meta_description_default: string;
+	/** Clave en R2 del PDF del curriculum; se sube por separado (`/api/cv`). */
+	cv_pdf_key: string | null;
 	translations: Record<string, Record<string, string | null>>;
 	created_at: string;
 	updated_at: string;
