@@ -515,3 +515,99 @@ describe("ProjectForm", () => {
 		expect(post).not.toHaveBeenCalled();
 	});
 });
+
+describe("TechPicker: orden de las tecnologias", () => {
+	const Host = ({ initial = [] as string[] }) => {
+		const form = useForm({ defaultValues: { images_topics: initial } });
+		return (
+			<FormProvider {...form}>
+				<output data-testid="v">
+					{JSON.stringify(form.watch("images_topics"))}
+				</output>
+				<TechPicker name="images_topics" label="Tecnologías" />
+			</FormProvider>
+		);
+	};
+	const value = () => JSON.parse(screen.getByTestId("v").textContent ?? "[]");
+	const click = (name: string | RegExp) =>
+		userEvent.click(screen.getByRole("button", { name }));
+
+	it("cada tecnologia tiene su asa para arrastrar, con su posicion", () => {
+		render(<Host initial={["react", "ts", "node"]} />);
+		for (const [i, tech] of ["react", "ts", "node"].entries()) {
+			expect(
+				screen.getByRole("button", {
+					name: `Arrastrar ${tech}, posición ${i + 1} de 3`,
+				}),
+			).toBeInTheDocument();
+		}
+		expect(
+			screen.getByRole("list", { name: "Tecnologías elegidas, en orden" }),
+		).toBeInTheDocument();
+	});
+
+	it("una recien agregada queda lista para ponerla al inicio, sin quitar las demas", async () => {
+		render(<Host initial={["git", "ts"]} />);
+		await userEvent.type(screen.getByRole("searchbox"), "react");
+		await click(/^react$/);
+		expect(value()).toEqual(["git", "ts", "react"]);
+
+		const group = screen.getByRole("group", { name: "Mover react" });
+		expect(within(group).getByText("3 de 3")).toBeInTheDocument();
+		await userEvent.click(
+			within(group).getByRole("button", { name: /Al inicio/ }),
+		);
+		expect(value()).toEqual(["react", "git", "ts"]);
+		expect(within(group).getByText("1 de 3")).toBeInTheDocument();
+	});
+
+	it("Antes, Despues y Al final mueven de a un lugar y se bloquean en los extremos", async () => {
+		render(<Host initial={["a1", "b2", "c3"]} />);
+		await click(/b2: elegir para moverla/);
+		const group = screen.getByRole("group", { name: "Mover b2" });
+		const btn = (name: RegExp) => within(group).getByRole("button", { name });
+
+		await userEvent.click(btn(/Antes/));
+		expect(value()).toEqual(["b2", "a1", "c3"]);
+		expect(btn(/Al inicio/)).toBeDisabled();
+		expect(btn(/Antes/)).toBeDisabled();
+
+		await userEvent.click(btn(/Después/));
+		await userEvent.click(btn(/Después/));
+		expect(value()).toEqual(["a1", "c3", "b2"]);
+		expect(btn(/Después/)).toBeDisabled();
+		expect(btn(/Al final/)).toBeDisabled();
+
+		await userEvent.click(btn(/Al inicio/));
+		expect(value()).toEqual(["b2", "a1", "c3"]);
+	});
+
+	it("Listo cierra la barra y tocar el nombre otra vez tambien", async () => {
+		render(<Host initial={["a1", "b2"]} />);
+		await click(/a1: elegir para moverla/);
+		expect(screen.getByRole("group", { name: "Mover a1" })).toBeInTheDocument();
+		await click(/Listo/);
+		expect(screen.queryByRole("group", { name: /Mover/ })).toBeNull();
+
+		await click(/b2: elegir para moverla/);
+		await click(/b2: elegir para moverla/);
+		expect(screen.queryByRole("group", { name: /Mover/ })).toBeNull();
+	});
+
+	it("quitar la tecnologia que se esta moviendo cierra la barra", async () => {
+		render(<Host initial={["a1", "b2"]} />);
+		await click(/a1: elegir para moverla/);
+		await click("Quitar a1");
+		expect(value()).toEqual(["b2"]);
+		expect(screen.queryByRole("group", { name: /Mover/ })).toBeNull();
+	});
+
+	it("la vista previa del conjunto sigue el orden nuevo", async () => {
+		render(<Host initial={["git", "docker"]} />);
+		await click(/docker: elegir para moverla/);
+		await click(/Al inicio/);
+		expect(
+			screen.getByAltText("Vista previa: docker, git"),
+		).toBeInTheDocument();
+	});
+});

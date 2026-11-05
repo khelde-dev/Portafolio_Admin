@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { formatDateTime, fromEpoch, parseD1Date } from "@/lib/format";
-import { findNavItem, NAV } from "@/lib/nav";
+import { backTarget, findNavItem, NAV } from "@/lib/nav";
 
 vi.mock("astro:env/server", () => ({
 	BACKEND_URL: "https://api.example.dev/api",
@@ -88,5 +88,31 @@ describe("getBackendHealth", () => {
 			throw new TypeError("fetch failed");
 		}) as never);
 		expect(health).toMatchObject({ ok: false, status: null });
+	});
+});
+
+describe("backTarget (el boton Volver)", () => {
+	it("lleva al nivel de arriba: la ultima miga con enlace antes de la pagina actual", () => {
+		expect(
+			backTarget([
+				{ label: "Proyectos", href: "/proyectos" },
+				{ label: "Editar" },
+			]),
+		).toEqual({ label: "Proyectos", href: "/proyectos" });
+		expect(
+			backTarget([
+				{ label: "Mensajes", href: "/mensajes" },
+				{ label: "Hilo", href: "/mensajes/3" },
+				{ label: "Responder" },
+			]),
+		).toEqual({ label: "Hilo", href: "/mensajes/3" });
+	});
+
+	it("en una pantalla de modulo o sin enlaces no hay a donde volver", () => {
+		expect(backTarget([])).toBeUndefined();
+		expect(backTarget([{ label: "Proyectos" }])).toBeUndefined();
+		expect(
+			backTarget([{ label: "Proyectos" }, { label: "Editar" }]),
+		).toBeUndefined();
 	});
 });
