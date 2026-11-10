@@ -15,6 +15,9 @@
 	// Sin URLs de vista previa: este Worker se protege con Cloudflare Access y
 	// cada URL extra seria una puerta mas sin proteger.
 	"preview_urls": false,
+	// Solo se entra por admin.khelde.dev (detras de Access): se apaga la URL
+	// *.workers.dev. Antes de desplegar, confirma que ese dominio responde.
+	"workers_dev": false,
 
 	// Variables de runtime NO secretas (las lee astro:env/server). Se declaran
 	// aqui para que un deploy no las borre. Las PUBLIC_* son de build: van en las
