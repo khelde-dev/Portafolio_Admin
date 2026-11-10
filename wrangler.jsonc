@@ -20,7 +20,7 @@
 	// aqui para que un deploy no las borre. Las PUBLIC_* son de build: van en las
 	// variables de build del panel de Cloudflare, no aqui.
 	"vars": {
-		"BACKEND_URL": "https://backend-portafolio.erickm-gonzalez-rivera.workers.dev/api",
+		"BACKEND_URL": "https://api.khelde.dev/api",
 		// De la aplicacion de Cloudflare Access que protege este Worker. No son
 		// secretos (el AUD y el dominio del equipo aparecen en cada JWT). El
 		// dominio lleva https:// y el MISMO valor va en el backend.
