@@ -8,8 +8,7 @@ import { THEME_SCRIPT } from "./src/lib/inlineScripts.ts";
 // Origenes de imagenes que el CSP permite en `img-src`. Mismas variables y mismos
 // valores por defecto que `PUBLIC_MEDIA_URL` / `PUBLIC_ICONS_URL` del esquema de abajo.
 const MEDIA_ORIGIN = new URL(
-	process.env.PUBLIC_MEDIA_URL ??
-		"https://pub-a3fda08feb4f417fa5634c34e7959461.r2.dev",
+	process.env.PUBLIC_MEDIA_URL ?? "https://media.khelde.dev",
 ).origin;
 const ICONS_ORIGIN = new URL(
 	process.env.PUBLIC_ICONS_URL ?? "https://go-skill-icons.vercel.app/api/icons",
@@ -89,8 +88,7 @@ export default defineConfig({
 			BACKEND_URL: envField.string({
 				context: "server",
 				access: "public",
-				default:
-					"https://backend-portafolio.erickm-gonzalez-rivera.workers.dev/api",
+				default: "https://api.khelde.dev/api",
 			}),
 			// Secreto: el mismo bearer que el backend espera en API_TOKEN.
 			API_SECRET_TOKEN: envField.string({
@@ -132,7 +130,7 @@ export default defineConfig({
 			PUBLIC_MEDIA_URL: envField.string({
 				context: "client",
 				access: "public",
-				default: "https://pub-a3fda08feb4f417fa5634c34e7959461.r2.dev",
+				default: "https://media.khelde.dev",
 			}),
 			// Servicio que dibuja los iconos de las tecnologias (`?i=<nombre>`): el
 			// mismo que usa el portafolio. Cuando se autoalojen, solo cambia esto.
@@ -145,7 +143,7 @@ export default defineConfig({
 			PUBLIC_PORTFOLIO_URL: envField.string({
 				context: "client",
 				access: "public",
-				default: "https://portafolio.erickm-gonzalez-rivera.workers.dev",
+				default: "https://khelde.dev",
 			}),
 		},
 	},
