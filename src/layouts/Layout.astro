@@ -17,7 +17,9 @@ const { title } = Astro.props;
 		<meta name="robots" content="noindex, nofollow" />
 		<meta name="color-scheme" content="light dark" />
 		<title>{title}</title>
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="icon" href="/favicon.ico" sizes="48x48" />
+		<link rel="icon" type="image/png" href="/icon-192.png" sizes="192x192" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 		<!-- Tema antes del primer pintado (sin parpadeo). El texto sale de
 		     src/lib/inlineScripts.ts, de donde astro.config.mjs calcula su hash. -->
 		<script is:inline set:html={THEME_SCRIPT}></script>
