@@ -2,7 +2,7 @@
 	"name": "portafolio-admin",
 	"private": true,
 	"type": "module",
-	"version": "0.7.0",
+	"version": "0.7.1",
 	"description": "Panel de administración (CMS) del portafolio de Erick González: edita el contenido del Backend_Portafolio. Sin login propio; el acceso lo protege Cloudflare Access.",
 	"license": "MIT",
 	"engines": {
