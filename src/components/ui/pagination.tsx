@@ -54,7 +54,6 @@ function PaginationLink({
 			nativeButton={false}
 			render={
 				// Base UI le pone role="button" a lo que no es un <button>; una pagina es un enlace.
-				// biome-ignore lint/a11y/useSemanticElements: ya es un <a>; el role anula el role="button" que agrega Base UI
 				<a
 					role="link"
 					aria-current={isActive ? "page" : undefined}
