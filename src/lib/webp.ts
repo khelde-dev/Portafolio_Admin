@@ -152,7 +152,7 @@ export const convertToWebp = async (
 		for (const quality of QUALITIES) {
 			const blob = await api.encode(image, width, height, quality);
 			// Safari devuelve PNG cuando no sabe codificar WebP: nunca se sube eso.
-			if (!blob || blob.type !== "image/webp") {
+			if (blob?.type !== "image/webp") {
 				throw new ImageError(
 					"Este navegador no puede crear WebP. Usa Chrome, Edge o Firefox para subir imágenes.",
 				);
