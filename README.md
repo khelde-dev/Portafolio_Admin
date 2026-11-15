@@ -14,7 +14,7 @@ vive solo en el servidor y el navegador nunca habla con el backend.
 
 ## Stack
 
-- [Astro 7](https://astro.build) SSR + islas de React 18 en **Cloudflare Workers**
+- [Astro 7](https://astro.build) SSR + islas de React 19 en **Cloudflare Workers**
 - Tailwind CSS v4 + shadcn/ui sobre Base UI (misma paleta que el portafolio)
 - Zod + react-hook-form · Biome · Vitest (cobertura v8) · Playwright + axe
 - Husky (commit-msg + Biome en staging) · GitHub Actions (CI, CodeQL, gitleaks)
